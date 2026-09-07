@@ -54,7 +54,8 @@ publication and duplicate POSTs are documented limitations. No exactly-once clai
 ## Local isolation
 
 Only gateway publishes `127.0.0.1:8000`. All services use an internal Compose
-network. Application containers run as UID 10001, with a read-only root filesystem,
+network; gateway alone also joins the edge network required for host publication.
+Application containers run as UID 10001, with a read-only root filesystem,
 all capabilities dropped and no-new-privileges. PostgreSQL and Redis use their
 upstream image startup behavior and named volumes. Credentials are generated for
 local use in ignored `.env`, never embedded in images. Docker daemon administrators
@@ -78,14 +79,12 @@ logs are not a tamper-evident audit trail. No Phase 2 behavior is included.
 
 ## Remaining Phase 1 work
 
-1. Complete real Linux Compose build/start and database/queue integration validation
-   wherever unavailable; exercise the provided persisted-row and correlation checks.
-2. Add authorized observability in a later slice: metrics, tracing, log collection,
+1. Add authorized observability in a later slice: metrics, tracing, log collection,
    Prometheus, Loki, Tempo and dashboards, with retention and sensitive-data rules.
-3. Implement read-only operational evidence adapters and the control-plane read API.
-4. Add CI, reviewed dependency locks and image digests; extend coverage to real
+2. Implement read-only operational evidence adapters and the control-plane read API.
+3. Add CI, reviewed dependency locks and image digests; extend coverage to real
    persistence and multi-process failure handling once the sandbox is available.
-5. Decide and implement submission idempotency/outbox reliability if required;
+4. Decide and implement submission idempotency/outbox reliability if required;
    current dual-write and stranded-job limitations are explicit.
 
 No chaos injection, AI investigation or remediation work is authorized here.

@@ -1,40 +1,70 @@
 # Validation record
 
-Validation performed on September 7, 2026 with Python 3.12.14.
+Live validation was completed on September 7, 2026 with Python 3.12.14,
+Docker Engine 29.6.2 on WSL2, and Docker Compose 5.3.1.
 
-## Successful checks
+## Docker diagnosis and repair
 
-- `python -m pytest`: 71 passed, 2 skipped, 2 visible upstream deprecation warnings.
-- Shared-code coverage: 100% statements and branches; threshold 90%.
-- `python -m ruff check .`: passed.
-- `python -m ruff format --check .`: 36 files formatted.
-- `python -m mypy`: passed for 32 source, test and migration files.
-- `python -m pip check`: no broken requirements.
-- `docker compose config --quiet`: passed using generated, ignored local values.
-- `python -m alembic history`: `0001_jobs` is the single head.
-- `python -m alembic upgrade head --sql`: generated complete PostgreSQL DDL,
-  constraints, index and Alembic version update without an error.
+The `desktop-linux` context was correct, but the Linux engine pipe did not exist,
+the `docker-desktop` WSL distribution and `com.docker.service` were stopped, and
+no Docker backend process was running. Starting the Windows service directly was
+denied. The installed `docker desktop start` command initially appeared idle but
+completed startup asynchronously; a later `docker info` returned the Linux server.
+No reinstall, reset, WSL change, or data deletion was performed.
 
-Pytest exposes two dependency warnings from FastAPI/Starlette test-client imports:
-the bundled FastAPI compatibility shim warns about an eventual `httpx2` move,
-and Starlette uses a deprecated AnyIO alias. They are not suppressed. Tests pass.
+All five application images built successfully. The first live start exposed one
+Compose defect: gateway was attached only to the internal application network.
+Docker retained its HostConfig port request but did not publish a host endpoint.
+Gateway now also attaches to a dedicated edge network; backend services remain
+only on the internal network. A topology regression test enforces that boundary.
 
-## Docker limitation
+## Live stack and migration
 
-Docker CLI 29.6.2 and Compose 5.3.1 are installed. Both sandboxed and elevated
-`docker version` calls failed to reach
-`npipe:////./pipe/dockerDesktopLinuxEngine`; the socket did not exist. A
-`docker desktop start` attempt made no progress and was interrupted after more
-than one minute. A final engine check produced the same missing-socket error.
+PostgreSQL, Redis, auth, data, worker, and gateway became healthy. The one-shot
+migration container exited 0. Live `alembic current` reported `0001_jobs (head)`.
+Catalog queries confirmed the jobs table, job_status and job_outcome constraints,
+primary key, and owner index. Schema creation used Alembic; no `create_all()`
+fallback was used.
 
-Therefore `docker compose build`, `up -d` and `ps` could not complete. PostgreSQL
-and Redis were not started, Alembic was not applied to a live database, Celery
-did not execute a real job, and no persisted row or cross-process request-ID log
-can truthfully be reported. The two opt-in real integration tests skipped because
-`INCIDENTPILOT_RUN_INTEGRATION` was unset. Their code is present for validation
-on a machine with a running Linux Docker engine.
+## Real workflow evidence
 
-Unit tests do verify request-ID propagation through HTTP mock transports and
-Celery arguments, JSON log inclusion, retry exhaustion, unavailable readiness
-dependencies, and safe handling of concurrent duplicate task delivery. These
-are unit-level evidence and are not described as end-to-end validation.
+A real host request to gateway returned HTTP 202 and an initial queued job. The
+worker received `incidentpilot.process_job`, logged running and completed, and
+Celery logged task success. Final gateway retrieval returned completed with the
+expected word count, character count, and SHA-256. A direct read-only PostgreSQL
+query found the same ID, sandbox owner, description, result, and UTC timestamps.
+Redis command counters increased and the jobs queue was empty after consumption.
+
+One correlation ID was present in gateway, auth, data, and worker structured logs.
+The worker running/completed entries and its surrounding data-service PATCH calls
+used that ID, demonstrating queue argument and worker-to-data propagation. Runtime
+job, task, and correlation IDs are intentionally kept out of version control.
+
+Two opt-in integration tests passed against real containers. They exercise real
+Celery completion and persistence, per-service correlation logs, direct database
+evidence, internal data CRUD, invalid transitions, and gateway ownership behavior.
+
+## Readiness and recovery
+
+- PostgreSQL stopped: data health stayed 200, data readiness became 503,
+  gateway health stayed 200, and gateway readiness/job retrieval became 503.
+  PostgreSQL and gateway readiness recovered after restart.
+- Auth stopped: gateway health stayed 200 and readiness became 503 connection
+  failure. Auth and gateway readiness recovered after restart.
+- Redis stopped: gateway health stayed 200, readiness became 503 broker unavailable,
+  and submission returned 503; its created row was marked failed/enqueue_failed.
+  Redis and gateway readiness recovered after restart. The Celery worker logged
+  its expected broker disconnect/retry sequence and reconnected.
+
+No data was deleted and every stopped dependency was restored. The PostgreSQL
+catalog contains one expected ERROR from an initially ambiguous read-only
+inspection expression; its corrected casted query passed. Worker connection
+errors and gateway enqueue error in the logs correspond to the intentional Redis
+stop. They are retained as operational evidence, not suppressed.
+
+## Quality checks
+
+The final command results are recorded in the task completion report. FastAPI and
+Starlette currently emit two upstream test-client deprecation warnings. Celery
+emits a pending-deprecation warning about broker retry settings during a forced
+disconnect. These warnings are visible and are not suppressed.

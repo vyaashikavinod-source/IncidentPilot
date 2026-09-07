@@ -92,6 +92,7 @@ services:
       args: {SERVICE_EXTRAS: "api,worker"}
     command: [uvicorn, incidentpilot.services.gateway.app:create_app, --factory, --host, 0.0.0.0, --port, "8000", --no-access-log]
     ports: ["127.0.0.1:8000:8000"]
+    networks: [application, edge]
     environment:
       INCIDENTPILOT_SERVICE_NAME: gateway
       INCIDENTPILOT_AUTH_URL: http://auth:8000
@@ -131,6 +132,7 @@ services:
 networks:
   application:
     internal: true
+  edge:
 volumes:
   postgres_data:
   redis_data:
