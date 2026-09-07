@@ -1,0 +1,136 @@
+name: incidentpilot
+
+x-app: &app
+  init: true
+  restart: "no"
+  read_only: true
+  tmpfs:
+    - /tmp
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  networks: [application]
+  mem_limit: 512m
+  cpus: 1.0
+
+x-http-health: &http-health
+  test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=4)"]
+  interval: 10s
+  timeout: 5s
+  retries: 5
+  start_period: 10s
+
+services:
+  postgres:
+    image: postgres:16-bookworm
+    environment:
+      POSTGRES_DB: incidentpilot
+      POSTGRES_PASSWORD: ${INCIDENTPILOT_POSTGRES_ADMIN_PASSWORD:?set a local admin password}
+      INCIDENTPILOT_DB_PASSWORD: ${INCIDENTPILOT_DB_PASSWORD:?set a local application password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/postgres/001-app-role.sql:/docker-entrypoint-initdb.d/001-app-role.sql:ro
+    networks: [application]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U postgres -d incidentpilot"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    mem_limit: 512m
+
+  redis:
+    image: redis:7.4-bookworm
+    command: [redis-server, --appendonly, "yes", --maxmemory, 128mb, --maxmemory-policy, noeviction]
+    volumes:
+      - redis_data:/data
+    networks: [application]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    mem_limit: 256m
+
+  migrate:
+    <<: *app
+    build:
+      context: .
+      args: {SERVICE_EXTRAS: data}
+    command: [alembic, upgrade, head]
+    environment: &data-env
+      INCIDENTPILOT_SERVICE_NAME: data
+      INCIDENTPILOT_DATABASE_URL: postgresql+psycopg://incidentpilot:${INCIDENTPILOT_DB_PASSWORD:?set a local application password}@postgres:5432/incidentpilot
+      INCIDENTPILOT_INTERNAL_TOKEN: ${INCIDENTPILOT_INTERNAL_TOKEN:?set a local internal token}
+    depends_on:
+      postgres: {condition: service_healthy}
+
+  data:
+    <<: *app
+    build:
+      context: .
+      args: {SERVICE_EXTRAS: "api,data"}
+    command: [uvicorn, incidentpilot.services.data.app:create_app, --factory, --host, 0.0.0.0, --port, "8000", --no-access-log]
+    environment: *data-env
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    healthcheck: *http-health
+
+  auth:
+    <<: *app
+    build:
+      context: .
+      args: {SERVICE_EXTRAS: api}
+    command: [uvicorn, incidentpilot.services.auth.app:create_app, --factory, --host, 0.0.0.0, --port, "8000", --no-access-log]
+    environment:
+      INCIDENTPILOT_SERVICE_NAME: auth
+      INCIDENTPILOT_SANDBOX_AUTH_TOKEN: ${INCIDENTPILOT_SANDBOX_AUTH_TOKEN:?set a local sandbox auth token}
+    healthcheck: *http-health
+
+  gateway:
+    <<: *app
+    build:
+      context: .
+      args: {SERVICE_EXTRAS: "api,worker"}
+    command: [uvicorn, incidentpilot.services.gateway.app:create_app, --factory, --host, 0.0.0.0, --port, "8000", --no-access-log]
+    ports: ["127.0.0.1:8000:8000"]
+    environment:
+      INCIDENTPILOT_SERVICE_NAME: gateway
+      INCIDENTPILOT_AUTH_URL: http://auth:8000
+      INCIDENTPILOT_DATA_URL: http://data:8000
+      INCIDENTPILOT_BROKER_URL: redis://redis:6379/0
+      INCIDENTPILOT_INTERNAL_TOKEN: ${INCIDENTPILOT_INTERNAL_TOKEN:?set a local internal token}
+      INCIDENTPILOT_HTTP_TIMEOUT: "3"
+    depends_on:
+      auth: {condition: service_healthy}
+      data: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    healthcheck: *http-health
+
+  worker:
+    <<: *app
+    build:
+      context: .
+      args: {SERVICE_EXTRAS: "api,worker"}
+    command: [celery, -A, incidentpilot.services.worker.app:app, worker, --loglevel=INFO, --concurrency=1, --hostname=worker@incidentpilot]
+    environment:
+      INCIDENTPILOT_SERVICE_NAME: worker
+      INCIDENTPILOT_DATA_URL: http://data:8000
+      INCIDENTPILOT_BROKER_URL: redis://redis:6379/0
+      INCIDENTPILOT_INTERNAL_TOKEN: ${INCIDENTPILOT_INTERNAL_TOKEN:?set a local internal token}
+      INCIDENTPILOT_WORKER_RETRY_LIMIT: "3"
+      INCIDENTPILOT_WORKER_RETRY_DELAY: "2"
+    depends_on:
+      data: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, celery, -A, incidentpilot.services.worker.app:app, inspect, ping, --destination=worker@incidentpilot, --timeout=3]
+      interval: 20s
+      timeout: 8s
+      retries: 3
+      start_period: 20s
+
+networks:
+  application:
+    internal: true
+volumes:
+  postgres_data:
+  redis_data:

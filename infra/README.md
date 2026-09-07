@@ -1,13 +1,12 @@
-# Infrastructure reserved for Phase 1
+# Local infrastructure
 
-Docker Compose will orchestrate gateway, auth, data, worker, control-plane,
-PostgreSQL, Redis, Prometheus, an OpenTelemetry collector, Tempo, Loki and a
-compatible log collector. No Compose manifest is provided in this foundation:
-there are not yet runnable application entrypoints to orchestrate.
+`docker-compose.yml` defines gateway, auth, data, worker, PostgreSQL, Redis and a
+one-shot Alembic migration service. The reusable multi-stage Dockerfile installs
+only each service's selected extras and runs application processes as non-root.
 
-Future configuration must use pinned images, service health checks, private
-networks, persistent data volumes and explicitly provisioned local credentials.
-Publish only required local ports on loopback. Never mount the Docker socket
-into the control plane. Do not introduce production credentials or imply that
-observability backends are already collecting data.
+`postgres/001-app-role.sql` provisions a non-superuser application role on a fresh
+PostgreSQL volume. Local credentials come from ignored `.env`; blank example
+values intentionally fail Compose validation. No Docker socket is mounted.
 
+See the repository README for startup, readiness and persistence behavior.
+Prometheus, Loki, Tempo, Grafana and telemetry collectors are not added.

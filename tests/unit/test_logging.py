@@ -50,6 +50,13 @@ def test_reconfiguration_does_not_duplicate_logs() -> None:
     assert len(new.getvalue().splitlines()) == 1
 
 
+def test_only_numeric_http_status_is_included() -> None:
+    stream = io.StringIO()
+    logger = configure_logging(Settings(), stream)
+    logger.info("request", extra={"http_status": 202})
+    assert json.loads(stream.getvalue())["http_status"] == 202
+
+
 def test_exception_excludes_sensitive_text() -> None:
     stream = io.StringIO()
     logger = configure_logging(Settings(), stream)

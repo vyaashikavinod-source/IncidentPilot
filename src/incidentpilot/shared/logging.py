@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 from typing import TextIO
 
 from incidentpilot.shared.config import Settings
+from incidentpilot.shared.correlation import request_id
 
 
 class JsonFormatter(logging.Formatter):
@@ -20,15 +21,19 @@ class JsonFormatter(logging.Formatter):
         self.service_name = service_name
 
     def format(self, record: logging.LogRecord) -> str:
-        payload: dict[str, str] = {
+        payload: dict[str, str | int] = {
             "timestamp": datetime.fromtimestamp(record.created, UTC).isoformat(),
             "level": record.levelname,
             "service": self.service_name,
             "logger": record.name,
             "message": record.getMessage(),
+            "request_id": request_id.get(),
         }
         if record.exc_info is not None and record.exc_info[0] is not None:
             payload["exception_type"] = record.exc_info[0].__name__
+        http_status = getattr(record, "http_status", None)
+        if isinstance(http_status, int):
+            payload["http_status"] = http_status
         return json.dumps(payload, ensure_ascii=False)
 
 

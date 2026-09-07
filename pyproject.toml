@@ -11,7 +11,7 @@ requires-python = ">=3.11"
 dependencies = ["pydantic-settings>=2.7,<3"]
 
 [project.optional-dependencies]
-api = ["fastapi>=0.115,<1", "uvicorn[standard]>=0.34,<1"]
+api = ["fastapi>=0.115,<1", "uvicorn[standard]>=0.34,<1", "httpx>=0.28,<1"]
 data = ["sqlalchemy>=2.0,<3", "psycopg[binary]>=3.2,<4", "alembic>=1.14,<2"]
 worker = ["celery[redis]>=5.4,<6", "redis>=5.2,<6"]
 observability = [
@@ -22,7 +22,7 @@ observability = [
   "opentelemetry-instrumentation-fastapi>=0.50b0,<1",
   "opentelemetry-instrumentation-celery>=0.50b0,<1",
 ]
-dev = ["pytest>=8.3,<9", "pytest-cov>=6,<7", "ruff>=0.9,<1", "mypy>=1.14,<2"]
+dev = ["pytest>=8.3,<9", "pytest-cov>=6,<7", "ruff>=0.9,<1", "mypy>=1.14,<2", "celery-types>=0.23,<1"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/incidentpilot"]
@@ -30,6 +30,7 @@ packages = ["src/incidentpilot"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--strict-config --strict-markers --cov=incidentpilot.shared --cov-report=term-missing --cov-report=xml --cov-fail-under=90"
+markers = ["integration: requires the explicitly enabled real Docker Compose sandbox"]
 
 [tool.coverage.run]
 branch = true
@@ -49,6 +50,5 @@ select = ["E", "F", "I", "UP", "B", "SIM"]
 [tool.mypy]
 python_version = "3.11"
 strict = true
-files = ["src", "tests"]
+files = ["src", "tests", "migrations"]
 plugins = ["pydantic.mypy"]
-

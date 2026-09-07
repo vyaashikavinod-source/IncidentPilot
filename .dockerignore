@@ -1,0 +1,9 @@
+*
+!pyproject.toml
+!README.md
+!src/
+!src/**
+!alembic.ini
+!migrations/
+!migrations/**
+**/__pycache__/

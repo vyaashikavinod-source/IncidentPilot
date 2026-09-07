@@ -2,7 +2,7 @@ PYTHON ?= python
 
 .PHONY: install check test lint typecheck format
 install:
-	$(PYTHON) -m pip install -e ".[api,data,worker,observability,dev]"
+	$(PYTHON) -m pip install -e ".[api,data,worker,dev]"
 check: lint typecheck test
 test:
 	$(PYTHON) -m pytest
@@ -13,4 +13,3 @@ typecheck:
 	$(PYTHON) -m mypy
 format:
 	$(PYTHON) -m ruff format .
-
