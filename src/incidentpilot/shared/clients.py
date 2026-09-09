@@ -1,5 +1,6 @@
 """Synchronous typed clients; FastAPI routes run blocking I/O in its threadpool."""
 
+import time
 from typing import TypeVar
 from uuid import UUID
 
@@ -7,6 +8,7 @@ import httpx
 from pydantic import BaseModel, ValidationError
 
 from incidentpilot.shared.correlation import request_id
+from incidentpilot.shared.metrics import Metrics
 from incidentpilot.shared.schemas import Identity, Job, JobCreate, JobPatch
 
 ResponseModel = TypeVar("ResponseModel", bound=BaseModel)
@@ -25,9 +27,15 @@ class UpstreamError(Exception):
 
 class ServiceClient:
     def __init__(
-        self, url: str, timeout: float, transport: httpx.BaseTransport | None = None
+        self,
+        url: str,
+        timeout: float,
+        transport: httpx.BaseTransport | None = None,
+        metrics: Metrics | None = None,
+        dependency: str = "service",
     ) -> None:
         self.http = httpx.Client(base_url=url, timeout=timeout, transport=transport)
+        self.metrics, self.dependency = metrics, dependency
 
     def close(self) -> None:
         self.http.close()
@@ -39,6 +47,8 @@ class ServiceClient:
         headers: dict[str, str] | None = None,
         body: BaseModel | None = None,
     ) -> httpx.Response:
+        started = time.monotonic()
+        outcome = "success"
         try:
             response = self.http.request(
                 method,
@@ -49,11 +59,22 @@ class ServiceClient:
             response.raise_for_status()
             return response
         except httpx.TimeoutException as exc:
+            outcome = "timeout"
             raise UpstreamError("upstream_timeout") from exc
         except httpx.RequestError as exc:
+            outcome = "connection_error"
             raise UpstreamError("upstream_connection_failure") from exc
         except httpx.HTTPStatusError as exc:
+            outcome = "http_error"
             raise UpstreamError("upstream_http_failure", exc.response.status_code) from exc
+        finally:
+            if self.metrics:
+                self.metrics.dependency_requests.labels(
+                    self.metrics.service, self.dependency, outcome
+                ).inc()
+                self.metrics.dependency_duration.labels(
+                    self.metrics.service, self.dependency
+                ).observe(time.monotonic() - started)
 
     def decode(self, response: httpx.Response, model: type[ResponseModel]) -> ResponseModel:
         try:
@@ -72,6 +93,15 @@ class ServiceClient:
 
 
 class AuthClient(ServiceClient):
+    def __init__(
+        self,
+        url: str,
+        timeout: float,
+        transport: httpx.BaseTransport | None = None,
+        metrics: Metrics | None = None,
+    ) -> None:
+        super().__init__(url, timeout, transport, metrics, "auth")
+
     def validate(self, authorization: str) -> Identity:
         identity = self.decode(
             self.request("POST", "/v1/auth/validate", {"Authorization": authorization}), Identity
@@ -88,8 +118,9 @@ class DataClient(ServiceClient):
         timeout: float,
         token: str,
         transport: httpx.BaseTransport | None = None,
+        metrics: Metrics | None = None,
     ) -> None:
-        super().__init__(url, timeout, transport)
+        super().__init__(url, timeout, transport, metrics, "data")
         self.headers = {"X-Internal-Token": token}
 
     def create(self, body: JobCreate) -> Job:

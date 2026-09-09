@@ -1,0 +1,7 @@
+apiVersion: 1
+providers:
+  - name: IncidentPilot
+    folder: IncidentPilot
+    type: file
+    options:
+      path: /var/lib/grafana/dashboards

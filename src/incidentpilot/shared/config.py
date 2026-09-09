@@ -17,6 +17,16 @@ class Settings(BaseSettings):
     environment: Literal["local", "test"] = "local"
     service_name: str = Field(default="incidentpilot", pattern=r"^[a-z][a-z0-9_-]{0,62}$")
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
+    telemetry_enabled: bool = False
+    otlp_endpoint: str = "http://localhost:4318"
+
+    @field_validator("otlp_endpoint")
+    @classmethod
+    def validate_otlp_endpoint(cls, value: str) -> str:
+        parsed = urlsplit(value)
+        if parsed.scheme not in {"http", "https"} or not parsed.hostname or parsed.username:
+            raise ValueError("otlp_endpoint must be an HTTP(S) URL without credentials")
+        return value.rstrip("/")
 
 
 class HTTPSettings(Settings):

@@ -3,9 +3,10 @@
 Phase 1 application slice: an asynchronous job workflow using FastAPI,
 PostgreSQL, Redis and Celery. Service code and Compose configuration are present;
 see `docs/validation.md` for what has actually been executed in this environment.
-There is no AI agent, chaos injection, remediation, incident memory, infrastructure
-mutation API, or observability infrastructure. The control plane is still a
-package skeleton.
+There is no AI agent, chaos injection, remediation, incident memory, or
+infrastructure mutation API. The control plane is still a package skeleton.
+The sandbox now includes metrics, tracing, centralized logs, and provisioned
+dashboards.
 
 ## Implemented workflow
 
@@ -56,12 +57,14 @@ Do not remove volumes unless you intend to discard sandbox data.
 
 | Service | Port / access | Readiness |
 | --- | --- | --- |
-| Gateway | host `127.0.0.1:8000` | auth, data and Redis respond |
+| Gateway | host `127.0.0.1:${INCIDENTPILOT_GATEWAY_PORT:-8000}` | auth, data and Redis respond |
 | Auth | internal `auth:8000` | validated configuration loaded |
 | Data | internal `data:8000` | PostgreSQL query against jobs succeeds |
-| Worker | no HTTP port | targeted Celery inspect ping |
+| Worker | internal `worker:9100` | Prometheus metrics endpoint responds |
 | PostgreSQL | internal `postgres:5432` | pg_isready |
 | Redis | internal `redis:6379` | PING |
+| Grafana | host `127.0.0.1:3000` | Grafana health endpoint |
+| Prometheus, Loki, Tempo, Collector | internal only | container health checks |
 
 HTTP services expose `/health` for process liveness and `/ready` for readiness.
 Readiness failures return 503. The worker ping confirms worker/broker connectivity;
@@ -110,7 +113,7 @@ submission idempotency are not implemented, and exactly-once delivery is not cla
 python -m venv .venv
 # POSIX: source .venv/bin/activate
 # PowerShell: .venv\Scripts\Activate.ps1
-python -m pip install -e ".[api,data,worker,dev]"
+python -m pip install -e ".[api,data,worker,observability,dev]"
 python -m pytest
 python -m ruff check .
 python -m ruff format --check .
@@ -120,7 +123,7 @@ python -m pip check
 
 GNU Make equivalents: `make install`, `make check`, `make test`, `make lint`,
 `make typecheck`. Dependency extras separate API, database and queue tooling.
-Existing observability extras are dormant; this slice does not use them.
+The observability extra contains the OpenTelemetry SDK, exporters, and framework instrumentations used by the services.
 A dependency lock and immutable image digests are still pending.
 
 Tests use explicit mock transports for unit isolation and label these as unit
@@ -144,4 +147,4 @@ by that service and run `uvicorn incidentpilot.services.<service>.app:create_app
 Worker command: `celery -A incidentpilot.services.worker.app:app worker
 --concurrency=1 --loglevel=INFO`. Run workers in Linux containers.
 
-See [architecture](docs/architecture.md) and [validation](docs/validation.md).
+See [architecture](docs/architecture.md), [observability](docs/observability.md), and [validation](docs/validation.md).

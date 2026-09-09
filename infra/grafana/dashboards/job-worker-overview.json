@@ -1,0 +1,18 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "panels": [
+    {"type":"stat","title":"Job events","datasource":{"uid":"prometheus"},"targets":[{"expr":"sum by (event) (incidentpilot_jobs_total)","legendFormat":"{{event}}"}],"gridPos":{"h":8,"w":8,"x":0,"y":0}},
+    {"type":"timeseries","title":"Worker task rate","datasource":{"uid":"prometheus"},"targets":[{"expr":"sum by (outcome) (rate(incidentpilot_worker_tasks_total[5m]))","legendFormat":"{{outcome}}"}],"gridPos":{"h":8,"w":8,"x":8,"y":0}},
+    {"type":"timeseries","title":"Worker task p95 duration","datasource":{"uid":"prometheus"},"targets":[{"expr":"histogram_quantile(0.95, sum by (le,service) (rate(incidentpilot_worker_task_duration_seconds_bucket[5m])))","legendFormat":"{{service}}"}],"gridPos":{"h":8,"w":8,"x":16,"y":0}},
+    {"type":"timeseries","title":"Queue depth","datasource":{"uid":"prometheus"},"targets":[{"expr":"incidentpilot_queue_depth","legendFormat":"{{queue}}"}],"gridPos":{"h":8,"w":12,"x":0,"y":8}},
+    {"type":"timeseries","title":"Task failures and retries","datasource":{"uid":"prometheus"},"targets":[{"expr":"sum by (outcome) (rate(incidentpilot_worker_tasks_total{outcome=~\"failed|retry\"}[5m]))","legendFormat":"{{outcome}}"}],"gridPos":{"h":8,"w":12,"x":12,"y":8}}
+  ],
+  "schemaVersion": 41,
+  "tags": ["incidentpilot", "phase1"],
+  "templating": {"list": []},
+  "time": {"from":"now-1h","to":"now"},
+  "title": "IncidentPilot Job and Worker Overview",
+  "uid": "incidentpilot-jobs",
+  "version": 1
+}

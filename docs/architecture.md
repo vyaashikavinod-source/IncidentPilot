@@ -42,7 +42,8 @@ and arbitrary exception text are not placed in application logs.
 
 Incoming valid UUID request IDs propagate through HTTP and Celery task arguments.
 ContextVar state is reset after each HTTP request/task. JSON logs include the
-current request ID. No OpenTelemetry tracing or telemetry backend is running.
+current request ID and active trace/span IDs. OpenTelemetry propagates context
+over HTTP and Celery and exports traces and logs through the Collector.
 
 The worker computes word count, character count and SHA-256 deterministically.
 Terminal jobs are skipped on redelivery. Retryable errors have a finite retry
@@ -53,7 +54,7 @@ publication and duplicate POSTs are documented limitations. No exactly-once clai
 
 ## Local isolation
 
-Only gateway publishes `127.0.0.1:8000`. All services use an internal Compose
+Only gateway and Grafana publish loopback ports. All services use an internal Compose
 network; gateway alone also joins the edge network required for host publication.
 Application containers run as UID 10001, with a read-only root filesystem,
 all capabilities dropped and no-new-privileges. PostgreSQL and Redis use their
@@ -79,12 +80,10 @@ logs are not a tamper-evident audit trail. No Phase 2 behavior is included.
 
 ## Remaining Phase 1 work
 
-1. Add authorized observability in a later slice: metrics, tracing, log collection,
-   Prometheus, Loki, Tempo and dashboards, with retention and sensitive-data rules.
-2. Implement read-only operational evidence adapters and the control-plane read API.
-3. Add CI, reviewed dependency locks and image digests; extend coverage to real
+1. Implement read-only operational evidence adapters and the control-plane read API.
+2. Add CI, reviewed dependency locks and image digests; extend coverage to real
    persistence and multi-process failure handling once the sandbox is available.
-4. Decide and implement submission idempotency/outbox reliability if required;
+3. Decide and implement submission idempotency/outbox reliability if required;
    current dual-write and stranded-job limitations are explicit.
 
 No chaos injection, AI investigation or remediation work is authorized here.

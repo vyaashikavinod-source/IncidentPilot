@@ -41,8 +41,11 @@ def live_gateway() -> Iterator[httpx.Client]:
     )
     if not token:
         pytest.fail("integration enabled but sandbox auth token is missing")
+    gateway_port = os.getenv("INCIDENTPILOT_GATEWAY_PORT") or values.get(
+        "INCIDENTPILOT_GATEWAY_PORT", "8000"
+    )
     with httpx.Client(
-        base_url="http://127.0.0.1:8000",
+        base_url=f"http://127.0.0.1:{gateway_port}",
         timeout=10,
         headers={"Authorization": f"Bearer {token}"},
     ) as client:

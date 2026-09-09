@@ -1,7 +1,7 @@
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import Annotated
+from typing import Annotated, cast
 from uuid import UUID
 
 from fastapi import FastAPI, Header, HTTPException
@@ -14,19 +14,34 @@ from incidentpilot.shared.config import GatewaySettings
 from incidentpilot.shared.correlation import request_id
 from incidentpilot.shared.http import configure_http
 from incidentpilot.shared.logging import configure_logging
+from incidentpilot.shared.metrics import Metrics
 from incidentpilot.shared.schemas import Job, JobCreate, JobInput, JobPatch, JobStatus
+from incidentpilot.shared.telemetry import configure_telemetry
 
 
 def create_app(settings: GatewaySettings | None = None) -> FastAPI:
     config = settings or GatewaySettings()
-    auth = AuthClient(config.auth_url, config.http_timeout)
+    metrics = Metrics(config.service_name)
+    auth = AuthClient(config.auth_url, config.http_timeout, metrics=metrics)
     data = DataClient(
-        config.data_url, config.http_timeout, config.internal_token.get_secret_value()
+        config.data_url,
+        config.http_timeout,
+        config.internal_token.get_secret_value(),
+        metrics=metrics,
     )
     queue = create_queue(config.broker_url.get_secret_value())
     broker = Redis.from_url(
         config.broker_url.get_secret_value(), socket_connect_timeout=3, socket_timeout=3
     )
+    queue_depth = metrics.queue_depth.labels(config.service_name, "jobs")
+
+    def observe_queue_depth() -> float:
+        try:
+            return float(cast(int, broker.llen("jobs")))
+        except RedisError:
+            return float("nan")
+
+    queue_depth.set_function(observe_queue_depth)
     logger = logging.getLogger("incidentpilot.gateway")
 
     @asynccontextmanager
@@ -39,20 +54,28 @@ def create_app(settings: GatewaySettings | None = None) -> FastAPI:
             data.close()
             broker.close()
             queue.close()
+            telemetry.shutdown()
 
     app = FastAPI(title="IncidentPilot gateway", lifespan=lifespan)
+    telemetry = configure_telemetry(config, app, instrument_celery=True)
     configure_http(app)
+    metrics.install(app)
     # Explicit handles also allow isolated transport tests; no fallback implementation.
     app.state.auth, app.state.data, app.state.queue, app.state.broker = auth, data, queue, broker
 
     @app.get("/ready")
     def ready() -> dict[str, str]:
-        auth.ready()
-        data.ready()
         try:
+            auth.ready()
+            data.ready()
             broker.ping()
         except RedisError as exc:
+            metrics.readiness.labels(config.service_name).set(0)
             raise HTTPException(503, "broker_unavailable") from exc
+        except UpstreamError:
+            metrics.readiness.labels(config.service_name).set(0)
+            raise
+        metrics.readiness.labels(config.service_name).set(1)
         return {"status": "ready"}
 
     def authenticate(authorization: str | None) -> str:
@@ -69,6 +92,7 @@ def create_app(settings: GatewaySettings | None = None) -> FastAPI:
         try:
             queue.send_task(TASK_NAME, args=[str(job.id), request_id.get()], retry=False)
         except Exception as exc:
+            metrics.jobs.labels(config.service_name, "enqueue_failed").inc()
             # Publish acknowledgement is ambiguous: do not claim a queued submission succeeded.
             logger.error("job_enqueue_failed")
             try:
@@ -77,6 +101,7 @@ def create_app(settings: GatewaySettings | None = None) -> FastAPI:
                 logger.error("enqueue_failure_could_not_be_recorded")
             raise HTTPException(503, {"code": "enqueue_failed", "job_id": str(job.id)}) from exc
         logger.info("job_enqueued")
+        metrics.jobs.labels(config.service_name, "submitted").inc()
         return job
 
     @app.get("/v1/jobs/{job_id}")

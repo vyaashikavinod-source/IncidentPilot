@@ -25,6 +25,8 @@ def test_environment_overrides(monkeypatch: pytest.MonkeyPatch) -> None:
         "environment": "test",
         "service_name": "auth",
         "log_level": "DEBUG",
+        "telemetry_enabled": False,
+        "otlp_endpoint": "http://localhost:4318",
     }
 
 

@@ -1,0 +1,18 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "panels": [
+    {"type":"timeseries","title":"Request rate","datasource":{"uid":"prometheus"},"targets":[{"expr":"sum by (service) (rate(incidentpilot_http_requests_total[5m]))","legendFormat":"{{service}}"}],"gridPos":{"h":8,"w":12,"x":0,"y":0}},
+    {"type":"timeseries","title":"Error rate","datasource":{"uid":"prometheus"},"targets":[{"expr":"sum by (service) (rate(incidentpilot_http_requests_total{status_class=~\"5..\"}[5m]))","legendFormat":"{{service}}"}],"gridPos":{"h":8,"w":12,"x":12,"y":0}},
+    {"type":"timeseries","title":"p95 latency","datasource":{"uid":"prometheus"},"targets":[{"expr":"histogram_quantile(0.95, sum by (le,service) (rate(incidentpilot_http_request_duration_seconds_bucket[5m])))","legendFormat":"{{service}}"}],"gridPos":{"h":8,"w":12,"x":0,"y":8}},
+    {"type":"stat","title":"Readiness","datasource":{"uid":"prometheus"},"targets":[{"expr":"incidentpilot_readiness","legendFormat":"{{service}}"}],"gridPos":{"h":8,"w":6,"x":12,"y":8}},
+    {"type":"timeseries","title":"Dependency failures","datasource":{"uid":"prometheus"},"targets":[{"expr":"sum by (service,dependency,outcome) (rate(incidentpilot_dependency_requests_total{outcome!=\"success\"}[5m]))","legendFormat":"{{service}} → {{dependency}} {{outcome}}"}],"gridPos":{"h":8,"w":6,"x":18,"y":8}}
+  ],
+  "schemaVersion": 41,
+  "tags": ["incidentpilot", "phase1"],
+  "templating": {"list": []},
+  "time": {"from":"now-1h","to":"now"},
+  "title": "IncidentPilot Service Overview",
+  "uid": "incidentpilot-services",
+  "version": 1
+}

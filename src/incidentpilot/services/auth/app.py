@@ -10,19 +10,27 @@ from fastapi import FastAPI, Header, HTTPException
 from incidentpilot.shared.config import AuthSettings
 from incidentpilot.shared.http import configure_http
 from incidentpilot.shared.logging import configure_logging
+from incidentpilot.shared.metrics import Metrics
 from incidentpilot.shared.schemas import Identity
+from incidentpilot.shared.telemetry import configure_telemetry
 
 
 def create_app(settings: AuthSettings | None = None) -> FastAPI:
     config = settings or AuthSettings()
+    metrics = Metrics(config.service_name)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         configure_logging(config)
-        yield
+        try:
+            yield
+        finally:
+            telemetry.shutdown()
 
     app = FastAPI(title="IncidentPilot sandbox auth", lifespan=lifespan)
+    telemetry = configure_telemetry(config, app)
     configure_http(app)
+    metrics.install(app)
 
     @app.get("/ready")
     def ready() -> dict[str, str]:

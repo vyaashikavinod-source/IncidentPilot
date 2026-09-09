@@ -67,9 +67,12 @@ services:
     <<: *app
     build:
       context: .
-      args: {SERVICE_EXTRAS: "api,data"}
+      args: {SERVICE_EXTRAS: "api,data,observability"}
     command: [uvicorn, incidentpilot.services.data.app:create_app, --factory, --host, 0.0.0.0, --port, "8000", --no-access-log]
-    environment: *data-env
+    environment:
+      <<: *data-env
+      INCIDENTPILOT_TELEMETRY_ENABLED: "true"
+      INCIDENTPILOT_OTLP_ENDPOINT: http://otel-collector:4318
     depends_on:
       migrate: {condition: service_completed_successfully}
     healthcheck: *http-health
@@ -78,20 +81,22 @@ services:
     <<: *app
     build:
       context: .
-      args: {SERVICE_EXTRAS: api}
+      args: {SERVICE_EXTRAS: "api,observability"}
     command: [uvicorn, incidentpilot.services.auth.app:create_app, --factory, --host, 0.0.0.0, --port, "8000", --no-access-log]
     environment:
       INCIDENTPILOT_SERVICE_NAME: auth
       INCIDENTPILOT_SANDBOX_AUTH_TOKEN: ${INCIDENTPILOT_SANDBOX_AUTH_TOKEN:?set a local sandbox auth token}
+      INCIDENTPILOT_TELEMETRY_ENABLED: "true"
+      INCIDENTPILOT_OTLP_ENDPOINT: http://otel-collector:4318
     healthcheck: *http-health
 
   gateway:
     <<: *app
     build:
       context: .
-      args: {SERVICE_EXTRAS: "api,worker"}
+      args: {SERVICE_EXTRAS: "api,worker,observability"}
     command: [uvicorn, incidentpilot.services.gateway.app:create_app, --factory, --host, 0.0.0.0, --port, "8000", --no-access-log]
-    ports: ["127.0.0.1:8000:8000"]
+    ports: ["127.0.0.1:${INCIDENTPILOT_GATEWAY_PORT:-8000}:8000"]
     networks: [application, edge]
     environment:
       INCIDENTPILOT_SERVICE_NAME: gateway
@@ -100,6 +105,8 @@ services:
       INCIDENTPILOT_BROKER_URL: redis://redis:6379/0
       INCIDENTPILOT_INTERNAL_TOKEN: ${INCIDENTPILOT_INTERNAL_TOKEN:?set a local internal token}
       INCIDENTPILOT_HTTP_TIMEOUT: "3"
+      INCIDENTPILOT_TELEMETRY_ENABLED: "true"
+      INCIDENTPILOT_OTLP_ENDPOINT: http://otel-collector:4318
     depends_on:
       auth: {condition: service_healthy}
       data: {condition: service_healthy}
@@ -110,8 +117,9 @@ services:
     <<: *app
     build:
       context: .
-      args: {SERVICE_EXTRAS: "api,worker"}
-    command: [celery, -A, incidentpilot.services.worker.app:app, worker, --loglevel=INFO, --concurrency=1, --hostname=worker@incidentpilot]
+      args: {SERVICE_EXTRAS: "api,worker,observability"}
+    # Solo keeps this single-worker sandbox's in-process Prometheus registry coherent.
+    command: [celery, -A, incidentpilot.services.worker.app:app, worker, --loglevel=INFO, --pool=solo, --concurrency=1, --hostname=worker@incidentpilot]
     environment:
       INCIDENTPILOT_SERVICE_NAME: worker
       INCIDENTPILOT_DATA_URL: http://data:8000
@@ -119,15 +127,94 @@ services:
       INCIDENTPILOT_INTERNAL_TOKEN: ${INCIDENTPILOT_INTERNAL_TOKEN:?set a local internal token}
       INCIDENTPILOT_WORKER_RETRY_LIMIT: "3"
       INCIDENTPILOT_WORKER_RETRY_DELAY: "2"
+      INCIDENTPILOT_TELEMETRY_ENABLED: "true"
+      INCIDENTPILOT_OTLP_ENDPOINT: http://otel-collector:4318
     depends_on:
       data: {condition: service_healthy}
       redis: {condition: service_healthy}
     healthcheck:
-      test: [CMD, celery, -A, incidentpilot.services.worker.app:app, inspect, ping, --destination=worker@incidentpilot, --timeout=3]
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9100/metrics', timeout=4)"]
       interval: 20s
       timeout: 8s
       retries: 3
       start_period: 20s
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.132.0
+    command: [--config=/etc/otelcol-contrib/config.yaml]
+    volumes:
+      - ./infra/otel/collector.yaml:/etc/otelcol-contrib/config.yaml:ro
+    networks: [application]
+    depends_on:
+      loki: {condition: service_started}
+      tempo: {condition: service_started}
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    command: [--config.file=/etc/prometheus/prometheus.yml, --storage.tsdb.path=/prometheus, --storage.tsdb.retention.time=7d, --storage.tsdb.retention.size=512MB]
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks: [application]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+
+  loki:
+    image: grafana/loki:3.5.3
+    command: [-config.file=/etc/loki/config.yaml]
+    volumes:
+      - ./infra/loki/config.yaml:/etc/loki/config.yaml:ro
+      - loki_data:/loki
+    networks: [application]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+
+  tempo:
+    image: grafana/tempo:2.8.2
+    command: [-config.file=/etc/tempo/config.yaml]
+    volumes:
+      - ./infra/tempo/config.yaml:/etc/tempo/config.yaml:ro
+      - tempo_data:/var/tempo
+    networks: [application]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+
+  grafana:
+    image: grafana/grafana:12.1.1
+    ports: ["127.0.0.1:3000:3000"]
+    environment:
+      GF_SECURITY_ADMIN_USER: ${INCIDENTPILOT_GRAFANA_ADMIN_USER:-sandbox}
+      GF_SECURITY_ADMIN_PASSWORD: ${INCIDENTPILOT_GRAFANA_ADMIN_PASSWORD:?set a local Grafana password}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    volumes:
+      - ./infra/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    networks: [application, edge]
+    depends_on:
+      prometheus: {condition: service_started}
+      loki: {condition: service_started}
+      tempo: {condition: service_started}
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
 
 networks:
   application:
@@ -136,3 +223,7 @@ networks:
 volumes:
   postgres_data:
   redis_data:
+  prometheus_data:
+  loki_data:
+  tempo_data:
+  grafana_data:

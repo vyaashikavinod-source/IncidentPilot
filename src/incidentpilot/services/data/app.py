@@ -1,4 +1,5 @@
 import secrets
+import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
@@ -7,6 +8,7 @@ from uuid import UUID
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.responses import JSONResponse
+from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from sqlalchemy import create_engine, select, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
@@ -15,11 +17,14 @@ from incidentpilot.services.data.models import JobRecord
 from incidentpilot.shared.config import DataSettings
 from incidentpilot.shared.http import configure_http
 from incidentpilot.shared.logging import configure_logging
+from incidentpilot.shared.metrics import Metrics
 from incidentpilot.shared.schemas import Job, JobCreate, JobPatch, transition_allowed
+from incidentpilot.shared.telemetry import configure_telemetry
 
 
 def create_app(settings: DataSettings | None = None) -> FastAPI:
     config = settings or DataSettings()
+    metrics = Metrics(config.service_name)
     engine = create_engine(
         config.database_url.get_secret_value(),
         pool_pre_ping=True,
@@ -37,9 +42,14 @@ def create_app(settings: DataSettings | None = None) -> FastAPI:
             yield
         finally:
             engine.dispose()
+            telemetry.shutdown()
 
     app = FastAPI(title="IncidentPilot data", lifespan=lifespan)
+    telemetry = configure_telemetry(config, app)
+    if config.telemetry_enabled:
+        SQLAlchemyInstrumentor().instrument(engine=engine)
     configure_http(app)
+    metrics.install(app)
 
     @app.exception_handler(SQLAlchemyError)
     async def database_error(request: Request, exc: SQLAlchemyError) -> JSONResponse:
@@ -53,8 +63,18 @@ def create_app(settings: DataSettings | None = None) -> FastAPI:
 
     @app.get("/ready")
     def ready() -> dict[str, str]:
-        with engine.connect() as connection:
-            connection.execute(text("SELECT 1 FROM jobs LIMIT 0"))
+        started = time.monotonic()
+        try:
+            with engine.connect() as connection:
+                connection.execute(text("SELECT 1 FROM jobs LIMIT 0"))
+            metrics.readiness.labels(config.service_name).set(1)
+        except SQLAlchemyError:
+            metrics.readiness.labels(config.service_name).set(0)
+            raise
+        finally:
+            metrics.database.labels(config.service_name, "readiness").observe(
+                time.monotonic() - started
+            )
         return {"status": "ready"}
 
     @app.post("/v1/jobs", status_code=201, dependencies=[Depends(internal)])
