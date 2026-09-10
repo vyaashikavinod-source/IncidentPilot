@@ -80,10 +80,9 @@ logs are not a tamper-evident audit trail. No Phase 2 behavior is included.
 
 ## Remaining Phase 1 work
 
-1. Implement read-only operational evidence adapters and the control-plane read API.
-2. Add CI, reviewed dependency locks and image digests; extend coverage to real
+1. Add CI, reviewed dependency locks and image digests; extend coverage to real
    persistence and multi-process failure handling once the sandbox is available.
-3. Decide and implement submission idempotency/outbox reliability if required;
+2. Decide and implement submission idempotency/outbox reliability if required;
    current dual-write and stranded-job limitations are explicit.
 
 No chaos injection, AI investigation or remediation work is authorized here.

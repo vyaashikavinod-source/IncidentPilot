@@ -148,3 +148,5 @@ Worker command: `celery -A incidentpilot.services.worker.app:app worker
 --concurrency=1 --loglevel=INFO`. Run workers in Linux containers.
 
 See [architecture](docs/architecture.md), [observability](docs/observability.md), and [validation](docs/validation.md).
+The [evidence-plane guide](docs/evidence-plane.md) documents the bounded read-only
+operator API and its enforced permission boundary.

@@ -65,6 +65,7 @@ services:
 
   data:
     <<: *app
+    networks: [application, evidence]
     build:
       context: .
       args: {SERVICE_EXTRAS: "api,data,observability"}
@@ -79,6 +80,7 @@ services:
 
   auth:
     <<: *app
+    networks: [application, evidence]
     build:
       context: .
       args: {SERVICE_EXTRAS: "api,observability"}
@@ -97,10 +99,11 @@ services:
       args: {SERVICE_EXTRAS: "api,worker,observability"}
     command: [uvicorn, incidentpilot.services.gateway.app:create_app, --factory, --host, 0.0.0.0, --port, "8000", --no-access-log]
     ports: ["127.0.0.1:${INCIDENTPILOT_GATEWAY_PORT:-8000}:8000"]
-    networks: [application, edge]
+    networks: [application, evidence, edge]
     environment:
       INCIDENTPILOT_SERVICE_NAME: gateway
       INCIDENTPILOT_AUTH_URL: http://auth:8000
+      INCIDENTPILOT_WORKER_METRICS_URL: http://worker:9100
       INCIDENTPILOT_DATA_URL: http://data:8000
       INCIDENTPILOT_BROKER_URL: redis://redis:6379/0
       INCIDENTPILOT_INTERNAL_TOKEN: ${INCIDENTPILOT_INTERNAL_TOKEN:?set a local internal token}
@@ -115,6 +118,7 @@ services:
 
   worker:
     <<: *app
+    networks: [application, evidence]
     build:
       context: .
       args: {SERVICE_EXTRAS: "api,worker,observability"}
@@ -139,12 +143,39 @@ services:
       retries: 3
       start_period: 20s
 
+  control-plane:
+    <<: *app
+    build:
+      context: .
+      args: {SERVICE_EXTRAS: "api,observability"}
+    command: [uvicorn, incidentpilot.services.control_plane.app:create_app, --factory, --host, 0.0.0.0, --port, "8000", --no-access-log]
+    ports: ["127.0.0.1:${INCIDENTPILOT_CONTROL_PLANE_PORT:-8001}:8000"]
+    networks: [evidence, edge]
+    environment:
+      INCIDENTPILOT_SERVICE_NAME: control-plane
+      INCIDENTPILOT_PROMETHEUS_URL: http://prometheus:9090
+      INCIDENTPILOT_LOKI_URL: http://loki:3100
+      INCIDENTPILOT_TEMPO_URL: http://tempo:3200
+      INCIDENTPILOT_DATA_URL: http://data:8000
+      INCIDENTPILOT_GATEWAY_URL: http://gateway:8000
+      INCIDENTPILOT_AUTH_URL: http://auth:8000
+      INCIDENTPILOT_INTERNAL_TOKEN: ${INCIDENTPILOT_INTERNAL_TOKEN:?set a local internal token}
+      INCIDENTPILOT_HTTP_TIMEOUT: "3"
+      INCIDENTPILOT_TELEMETRY_ENABLED: "true"
+      INCIDENTPILOT_OTLP_ENDPOINT: http://otel-collector:4318
+    depends_on:
+      gateway: {condition: service_healthy}
+      prometheus: {condition: service_started}
+      loki: {condition: service_started}
+      tempo: {condition: service_started}
+    healthcheck: *http-health
+
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.132.0
     command: [--config=/etc/otelcol-contrib/config.yaml]
     volumes:
       - ./infra/otel/collector.yaml:/etc/otelcol-contrib/config.yaml:ro
-    networks: [application]
+    networks: [application, evidence]
     depends_on:
       loki: {condition: service_started}
       tempo: {condition: service_started}
@@ -160,7 +191,7 @@ services:
     volumes:
       - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
-    networks: [application]
+    networks: [application, evidence]
     read_only: true
     tmpfs: [/tmp]
     cap_drop: [ALL]
@@ -173,7 +204,7 @@ services:
     volumes:
       - ./infra/loki/config.yaml:/etc/loki/config.yaml:ro
       - loki_data:/loki
-    networks: [application]
+    networks: [application, evidence]
     read_only: true
     tmpfs: [/tmp]
     cap_drop: [ALL]
@@ -186,7 +217,7 @@ services:
     volumes:
       - ./infra/tempo/config.yaml:/etc/tempo/config.yaml:ro
       - tempo_data:/var/tempo
-    networks: [application]
+    networks: [application, evidence]
     read_only: true
     tmpfs: [/tmp]
     cap_drop: [ALL]
@@ -218,6 +249,8 @@ services:
 
 networks:
   application:
+    internal: true
+  evidence:
     internal: true
   edge:
 volumes:

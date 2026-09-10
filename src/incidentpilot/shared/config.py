@@ -98,3 +98,29 @@ class GatewaySettings(ClientSettings):
 class WorkerSettings(ClientSettings):
     worker_retry_limit: int = Field(default=3, ge=0, le=5)
     worker_retry_delay: int = Field(default=2, ge=1, le=30)
+
+
+class ControlPlaneSettings(HTTPSettings):
+    prometheus_url: str = "http://prometheus:9090"
+    loki_url: str = "http://loki:3100"
+    tempo_url: str = "http://tempo:3200"
+    data_url: str = "http://data:8000"
+    gateway_url: str = "http://gateway:8000"
+    auth_url: str = "http://auth:8000"
+    worker_metrics_url: str = "http://worker:9100"
+    internal_token: SecretStr = Field(min_length=16)
+    evidence_max_window_seconds: int = Field(default=86400, ge=60, le=86400)
+    evidence_max_results: int = Field(default=500, ge=1, le=1000)
+
+    @field_validator(
+        "prometheus_url",
+        "loki_url",
+        "tempo_url",
+        "data_url",
+        "gateway_url",
+        "auth_url",
+        "worker_metrics_url",
+    )
+    @classmethod
+    def validate_source_url(cls, value: str) -> str:
+        return ClientSettings.http_url(value)

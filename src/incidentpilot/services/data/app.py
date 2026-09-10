@@ -3,18 +3,19 @@ import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
-from typing import Annotated
+from typing import Annotated, Literal, cast
 from uuid import UUID
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from sqlalchemy import create_engine, select, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
-from incidentpilot.services.data.models import JobRecord
+from incidentpilot.services.data.models import DeploymentRecord, JobRecord
 from incidentpilot.shared.config import DataSettings
+from incidentpilot.shared.evidence import Deployment
 from incidentpilot.shared.http import configure_http
 from incidentpilot.shared.logging import configure_logging
 from incidentpilot.shared.metrics import Metrics
@@ -98,6 +99,27 @@ def create_app(settings: DataSettings | None = None) -> FastAPI:
     def get(job_id: UUID) -> Job:
         with sessions() as session:
             return Job.model_validate(find(session, job_id))
+
+    @app.get("/v1/deployments", dependencies=[Depends(internal)])
+    def deployments(limit: Annotated[int, Query(ge=1, le=100)] = 20) -> list[Deployment]:
+        with sessions() as session:
+            rows = session.scalars(
+                select(DeploymentRecord).order_by(DeploymentRecord.deployed_at.desc()).limit(limit)
+            )
+            return [
+                Deployment(
+                    deployment_id=row.id,
+                    service=row.service,
+                    version=row.version,
+                    git_sha=row.git_sha,
+                    image_reference=row.image_reference,
+                    environment=row.environment,
+                    deployed_at=row.deployed_at,
+                    status=cast(Literal["succeeded", "failed", "rolled_back"], row.status),
+                    metadata=row.deployment_metadata,
+                )
+                for row in rows
+            ]
 
     @app.patch("/v1/jobs/{job_id}", dependencies=[Depends(internal)])
     def patch(job_id: UUID, body: JobPatch) -> Job:

@@ -132,3 +132,50 @@ with httpx.Client(base_url='http://data:8000', timeout=5,
     persisted = json.loads(row)
     assert persisted["status"] == "failed"
     assert persisted["error"] == "integration check"
+
+
+def test_read_only_evidence_plane_reads_real_sources(live_gateway: httpx.Client) -> None:
+    values = dotenv_values(ROOT / ".env")
+    port = os.getenv("INCIDENTPILOT_CONTROL_PLANE_PORT") or values.get(
+        "INCIDENTPILOT_CONTROL_PLANE_PORT", "8001"
+    )
+    correlation = str(uuid4())
+    submitted = live_gateway.post(
+        "/v1/jobs",
+        json={"description": "evidence integration check"},
+        headers={"X-Request-ID": correlation},
+    )
+    submitted.raise_for_status()
+    identifier = submitted.json()["id"]
+    deadline = time.monotonic() + 45
+    while True:
+        job = live_gateway.get(f"/v1/jobs/{identifier}").json()
+        if job["status"] in {"completed", "failed"}:
+            break
+        assert time.monotonic() < deadline
+        time.sleep(0.5)
+    assert job["status"] == "completed"
+    time.sleep(10)
+    with httpx.Client(base_url=f"http://127.0.0.1:{port}", timeout=20) as evidence:
+        logs = evidence.get(
+            "/v1/evidence/logs",
+            params={"service": "gateway", "request_id": correlation, "limit": 20},
+        )
+        logs.raise_for_status()
+        events = logs.json()["events"]
+        assert any(event["request_id"] == correlation for event in events)
+        trace_id = next(event["trace_id"] for event in events if event["trace_id"])
+        trace = evidence.get(f"/v1/evidence/traces/{trace_id}")
+        trace.raise_for_status()
+        assert {"gateway", "auth", "data", "worker"} <= set(trace.json()["services"])
+        metrics = evidence.get("/v1/evidence/metrics/jobs", params={"window_seconds": 900})
+        metrics.raise_for_status()
+        assert metrics.json()["provenance"]["result_count"] > 0
+        services = evidence.get("/v1/evidence/services")
+        services.raise_for_status()
+        assert all(item["alive"] for item in services.json()["services"])
+        deployments = evidence.get("/v1/evidence/deployments")
+        deployments.raise_for_status()
+        assert deployments.json()["deployments"][0]["git_sha"] == (
+            "afca0b9eb853d346a86c0edc14d13b4a82e49ba9"
+        )

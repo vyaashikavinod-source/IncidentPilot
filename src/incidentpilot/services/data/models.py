@@ -44,3 +44,17 @@ class JobRecord(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+
+class DeploymentRecord(Base):
+    __tablename__ = "deployments"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    service: Mapped[str] = mapped_column(String(63), index=True)
+    version: Mapped[str] = mapped_column(String(100))
+    git_sha: Mapped[str] = mapped_column(String(64))
+    image_reference: Mapped[str] = mapped_column(String(255))
+    environment: Mapped[str] = mapped_column(String(32), index=True)
+    deployed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    status: Mapped[str] = mapped_column(String(32))
+    deployment_metadata: Mapped[dict[str, str]] = mapped_column(JSONB, default=dict)

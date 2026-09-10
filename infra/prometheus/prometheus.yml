@@ -4,7 +4,7 @@ global:
 scrape_configs:
   - job_name: incidentpilot-http
     static_configs:
-      - targets: [gateway:8000, auth:8000, data:8000]
+      - targets: [gateway:8000, auth:8000, data:8000, control-plane:8000]
   - job_name: incidentpilot-worker
     static_configs:
       - targets: [worker:9100]
