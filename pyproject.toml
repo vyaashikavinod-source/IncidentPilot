@@ -25,6 +25,7 @@ observability = [
   "opentelemetry-instrumentation-sqlalchemy>=0.50b0,<1",
 ]
 dev = [
+  "pip-tools>=7.4,<8",
   "pytest>=8.3,<9",
   "pytest-cov>=6,<7",
   "ruff>=0.9,<1",

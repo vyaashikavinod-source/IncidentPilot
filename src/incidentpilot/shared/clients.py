@@ -9,7 +9,7 @@ from pydantic import BaseModel, ValidationError
 
 from incidentpilot.shared.correlation import request_id
 from incidentpilot.shared.metrics import Metrics
-from incidentpilot.shared.schemas import Identity, Job, JobCreate, JobPatch
+from incidentpilot.shared.schemas import Identity, Job, JobPatch, JobSubmission, JobSubmissionCreate
 
 ResponseModel = TypeVar("ResponseModel", bound=BaseModel)
 
@@ -123,8 +123,8 @@ class DataClient(ServiceClient):
         super().__init__(url, timeout, transport, metrics, "data")
         self.headers = {"X-Internal-Token": token}
 
-    def create(self, body: JobCreate) -> Job:
-        return self.decode(self.request("POST", "/v1/jobs", self.headers, body), Job)
+    def create(self, body: JobSubmissionCreate) -> JobSubmission:
+        return self.decode(self.request("POST", "/v1/jobs", self.headers, body), JobSubmission)
 
     def get(self, job_id: UUID) -> Job:
         return self.decode(self.request("GET", f"/v1/jobs/{job_id}", self.headers), Job)

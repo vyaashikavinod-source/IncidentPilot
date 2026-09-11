@@ -20,7 +20,7 @@ from incidentpilot.shared.clients import UpstreamError
 from incidentpilot.shared.config import AuthSettings, DataSettings, GatewaySettings, Settings
 from incidentpilot.shared.correlation import request_id
 from incidentpilot.shared.logging import configure_logging
-from incidentpilot.shared.schemas import Job, JobStatus
+from incidentpilot.shared.schemas import Job, JobStatus, JobSubmission
 
 
 @pytest.mark.parametrize("authorization", [None, "", "Basic wrong", "Bearer wrong", "Bearer é"])
@@ -112,7 +112,12 @@ def test_gateway_authenticated_submission_and_metadata(
                 200,
                 json={"subject": "sandbox-user", "roles": ["sandbox_user"], "authenticated": True},
             )
-        return httpx.Response(200, json=job.model_dump(mode="json"))
+        body = (
+            {"job": job.model_dump(mode="json"), "replayed": False}
+            if request.method == "POST"
+            else job.model_dump(mode="json")
+        )
+        return httpx.Response(200, json=body)
 
     # Typed clients perform real serialization over isolated mock transports, not E2E.
     app.state.auth.http.close()
@@ -126,7 +131,11 @@ def test_gateway_authenticated_submission_and_metadata(
     send = Mock()
     monkeypatch.setattr(app.state.queue, "send_task", send)
     with gateway:
-        headers = {"Authorization": "Bearer unit-test-only", "X-Request-ID": correlation}
+        headers = {
+            "Authorization": "Bearer unit-test-only",
+            "X-Request-ID": correlation,
+            "Idempotency-Key": "unit-test-key",
+        }
         response = gateway.post("/v1/jobs", json={"description": "hello world"}, headers=headers)
         assert response.status_code == 202
         assert response.json()["status"] == "queued"
@@ -140,6 +149,61 @@ def test_gateway_missing_auth(gateway: TestClient) -> None:
     with gateway:
         assert gateway.post("/v1/jobs", json={"description": "hello"}).status_code == 401
         assert gateway.get(f"/v1/jobs/{uuid4()}").status_code == 401
+
+
+@pytest.mark.parametrize(
+    ("headers", "expected"),
+    [
+        ({"Authorization": "Bearer test"}, 400),
+        ({"Authorization": "Bearer test", "Idempotency-Key": "contains space"}, 422),
+        ({"Authorization": "Bearer test", "Idempotency-Key": "x" * 129}, 422),
+    ],
+)
+def test_gateway_requires_valid_idempotency_key(
+    gateway: TestClient, monkeypatch: pytest.MonkeyPatch, headers: dict[str, str], expected: int
+) -> None:
+    monkeypatch.setattr(
+        cast(FastAPI, gateway.app).state.auth,
+        "validate",
+        Mock(return_value=Mock(subject="sandbox-user")),
+    )
+    with gateway:
+        response = gateway.post("/v1/jobs", json={"description": "hello"}, headers=headers)
+    assert response.status_code == expected
+
+
+def test_gateway_replay_does_not_publish_again(
+    gateway: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    job = Job(
+        id=uuid4(),
+        owner_id="sandbox-user",
+        description="hello",
+        status=JobStatus.QUEUED,
+        result=None,
+        error=None,
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
+    )
+    app = cast(FastAPI, gateway.app)
+    monkeypatch.setattr(app.state.auth, "validate", Mock(return_value=Mock(subject="sandbox-user")))
+    monkeypatch.setattr(
+        app.state.data,
+        "create",
+        Mock(return_value=JobSubmission(job=job, replayed=True)),
+    )
+    send = Mock()
+    monkeypatch.setattr(app.state.queue, "send_task", send)
+    with gateway:
+        response = gateway.post(
+            "/v1/jobs",
+            json={"description": "hello"},
+            headers={"Authorization": "Bearer test", "Idempotency-Key": "same-request"},
+        )
+    assert response.status_code == 202
+    assert response.headers["Idempotency-Replayed"] == "true"
+    assert response.json()["id"] == str(job.id)
+    send.assert_not_called()
 
 
 @pytest.mark.parametrize("dependency", ["auth", "data", "broker"])
@@ -186,7 +250,11 @@ def test_enqueue_failure_is_not_success(
         "validate",
         Mock(return_value=Mock(subject="sandbox-user")),
     )
-    monkeypatch.setattr(cast(FastAPI, gateway.app).state.data, "create", Mock(return_value=job))
+    monkeypatch.setattr(
+        cast(FastAPI, gateway.app).state.data,
+        "create",
+        Mock(return_value=JobSubmission(job=job, replayed=False)),
+    )
     patch = Mock(side_effect=None if record_failure else UpstreamError("unavailable"))
     monkeypatch.setattr(cast(FastAPI, gateway.app).state.data, "patch", patch)
     monkeypatch.setattr(
@@ -196,7 +264,9 @@ def test_enqueue_failure_is_not_success(
     )
     with gateway:
         response = gateway.post(
-            "/v1/jobs", json={"description": "hello"}, headers={"Authorization": "Bearer test"}
+            "/v1/jobs",
+            json={"description": "hello"},
+            headers={"Authorization": "Bearer test", "Idempotency-Key": "failure-key"},
         )
         assert response.status_code == 503
         assert response.json()["detail"]["job_id"] == str(job.id)

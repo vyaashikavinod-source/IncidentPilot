@@ -1,10 +1,11 @@
+import hashlib
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Annotated, cast
 from uuid import UUID
 
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Response
 from redis import Redis
 from redis.exceptions import RedisError
 
@@ -15,7 +16,7 @@ from incidentpilot.shared.correlation import request_id
 from incidentpilot.shared.http import configure_http
 from incidentpilot.shared.logging import configure_logging
 from incidentpilot.shared.metrics import Metrics
-from incidentpilot.shared.schemas import Job, JobCreate, JobInput, JobPatch, JobStatus
+from incidentpilot.shared.schemas import Job, JobInput, JobPatch, JobStatus, JobSubmissionCreate
 from incidentpilot.shared.telemetry import configure_telemetry
 
 
@@ -86,9 +87,34 @@ def create_app(settings: GatewaySettings | None = None) -> FastAPI:
         return auth.validate(authorization).subject
 
     @app.post("/v1/jobs", status_code=202)
-    def create(body: JobInput, authorization: Annotated[str | None, Header()] = None) -> Job:
+    def create(
+        body: JobInput,
+        response: Response,
+        authorization: Annotated[str | None, Header()] = None,
+        idempotency_key: Annotated[
+            str | None,
+            Header(
+                alias="Idempotency-Key", min_length=1, max_length=128, pattern=r"^[A-Za-z0-9._:-]+$"
+            ),
+        ] = None,
+    ) -> Job:
         owner = authenticate(authorization)
-        job = data.create(JobCreate(description=body.description, owner_id=owner))
+        if idempotency_key is None:
+            raise HTTPException(400, "Idempotency-Key required")
+        digest = hashlib.sha256(body.model_dump_json().encode()).hexdigest()
+        submission = data.create(
+            JobSubmissionCreate(
+                description=body.description,
+                owner_id=owner,
+                idempotency_key=idempotency_key,
+                payload_sha256=digest,
+            )
+        )
+        job = submission.job
+        response.headers["Idempotency-Replayed"] = str(submission.replayed).lower()
+        if submission.replayed:
+            metrics.jobs.labels(config.service_name, "replayed").inc()
+            return job
         try:
             queue.send_task(TASK_NAME, args=[str(job.id), request_id.get()], retry=False)
         except Exception as exc:

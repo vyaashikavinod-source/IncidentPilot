@@ -33,6 +33,11 @@ class JobCreate(JobInput):
     owner_id: str = Field(min_length=1, max_length=100)
 
 
+class JobSubmissionCreate(JobCreate):
+    idempotency_key: str = Field(min_length=1, max_length=128, pattern=r"^[A-Za-z0-9._:-]+$")
+    payload_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
 class JobResult(Contract):
     word_count: int = Field(ge=0)
     character_count: int = Field(ge=0)
@@ -64,6 +69,11 @@ class Job(JobCreate):
     error: str | None
     created_at: datetime
     updated_at: datetime
+
+
+class JobSubmission(Contract):
+    job: Job
+    replayed: bool
 
 
 def transition_allowed(current: JobStatus, target: JobStatus) -> bool:

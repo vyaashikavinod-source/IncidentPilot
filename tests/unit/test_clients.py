@@ -6,7 +6,7 @@ import pytest
 
 from incidentpilot.shared.clients import AuthClient, DataClient, ServiceClient, UpstreamError
 from incidentpilot.shared.correlation import request_id
-from incidentpilot.shared.schemas import Job, JobCreate, JobPatch, JobStatus
+from incidentpilot.shared.schemas import Job, JobPatch, JobStatus, JobSubmissionCreate
 
 
 def sample_job() -> Job:
@@ -111,12 +111,26 @@ def test_data_contract_and_request_id_propagation() -> None:
         assert request.headers["X-Request-ID"] == correlation
         assert request.headers["X-Internal-Token"] == "unit-test-only"
         seen.append(request.method)
-        return httpx.Response(200, json=job.model_dump(mode="json"))
+        body = (
+            {"job": job.model_dump(mode="json"), "replayed": False}
+            if request.method == "POST"
+            else job.model_dump(mode="json")
+        )
+        return httpx.Response(200, json=body)
 
     client = DataClient("http://data", 1, "unit-test-only", httpx.MockTransport(respond))
     token = request_id.set(correlation)
     try:
-        assert client.create(JobCreate(owner_id=job.owner_id, description=job.description)) == job
+        submitted = client.create(
+            JobSubmissionCreate(
+                owner_id=job.owner_id,
+                description=job.description,
+                idempotency_key="unit-test-key",
+                payload_sha256="0" * 64,
+            )
+        )
+        assert submitted.job == job
+        assert submitted.replayed is False
         assert client.get(job.id) == job
         assert client.patch(job.id, JobPatch(status=JobStatus.RUNNING)) == job
         assert seen == ["POST", "GET", "PATCH"]

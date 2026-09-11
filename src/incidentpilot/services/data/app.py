@@ -10,7 +10,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 from sqlalchemy import create_engine, select, text
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
 from incidentpilot.services.data.models import DeploymentRecord, JobRecord
@@ -19,7 +19,13 @@ from incidentpilot.shared.evidence import Deployment
 from incidentpilot.shared.http import configure_http
 from incidentpilot.shared.logging import configure_logging
 from incidentpilot.shared.metrics import Metrics
-from incidentpilot.shared.schemas import Job, JobCreate, JobPatch, transition_allowed
+from incidentpilot.shared.schemas import (
+    Job,
+    JobPatch,
+    JobSubmission,
+    JobSubmissionCreate,
+    transition_allowed,
+)
 from incidentpilot.shared.telemetry import configure_telemetry
 
 
@@ -79,12 +85,39 @@ def create_app(settings: DataSettings | None = None) -> FastAPI:
         return {"status": "ready"}
 
     @app.post("/v1/jobs", status_code=201, dependencies=[Depends(internal)])
-    def create(body: JobCreate) -> Job:
-        with sessions.begin() as session:
-            record = JobRecord(owner_id=body.owner_id, description=body.description)
-            session.add(record)
-            session.flush()
-            return Job.model_validate(record)
+    def create(body: JobSubmissionCreate) -> JobSubmission:
+        def existing() -> JobRecord | None:
+            with sessions() as session:
+                return session.scalar(
+                    select(JobRecord).where(
+                        JobRecord.owner_id == body.owner_id,
+                        JobRecord.idempotency_key == body.idempotency_key,
+                    )
+                )
+
+        record = existing()
+        if record is not None:
+            if record.payload_sha256 != body.payload_sha256:
+                raise HTTPException(409, "idempotency_payload_conflict") from None
+            return JobSubmission(job=Job.model_validate(record), replayed=True)
+        try:
+            with sessions.begin() as session:
+                record = JobRecord(
+                    owner_id=body.owner_id,
+                    description=body.description,
+                    idempotency_key=body.idempotency_key,
+                    payload_sha256=body.payload_sha256,
+                )
+                session.add(record)
+                session.flush()
+                return JobSubmission(job=Job.model_validate(record), replayed=False)
+        except IntegrityError:
+            record = existing()
+            if record is None:
+                raise
+            if record.payload_sha256 != body.payload_sha256:
+                raise HTTPException(409, "idempotency_payload_conflict") from None
+            return JobSubmission(job=Job.model_validate(record), replayed=True)
 
     def find(session: Session, job_id: UUID, lock: bool = False) -> JobRecord:
         query = select(JobRecord).where(JobRecord.id == job_id)

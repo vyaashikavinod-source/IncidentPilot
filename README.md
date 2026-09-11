@@ -10,7 +10,8 @@ dashboards.
 
 ## Implemented workflow
 
-1. Client submits `POST /v1/jobs` to the gateway with a sandbox bearer token.
+1. Client submits `POST /v1/jobs` with a sandbox bearer token and an
+   `Idempotency-Key`.
 2. Gateway calls auth, which returns the single `sandbox-user` identity.
 3. Gateway calls data to persist a queued job, then publishes its ID and the
    originating request ID to the Redis-backed Celery queue.
@@ -73,12 +74,15 @@ it does not promise the data service will remain available when a task starts.
 To submit and retrieve a job from PowerShell (set the token from your local `.env`):
 
 ```powershell
-$headers = @{ Authorization = "Bearer $env:INCIDENTPILOT_SANDBOX_AUTH_TOKEN"; "X-Request-ID" = [guid]::NewGuid().ToString() }
+$headers = @{ Authorization = "Bearer $env:INCIDENTPILOT_SANDBOX_AUTH_TOKEN"; "X-Request-ID" = [guid]::NewGuid().ToString(); "Idempotency-Key" = [guid]::NewGuid().ToString() }
 $job = Invoke-RestMethod http://127.0.0.1:8000/v1/jobs -Method Post -Headers $headers -ContentType application/json -Body '{"description":"hello incident pilot"}'
 Invoke-RestMethod "http://127.0.0.1:8000/v1/jobs/$($job.id)" -Headers $headers
 ```
 
-Successful POST returns HTTP 202 with the queued record. GET uses the same Job
+Successful POST returns HTTP 202 with the queued record and an
+`Idempotency-Replayed` header. Repeating the same owner/key/payload returns the
+original row without another queue publication; changing the payload returns
+409. GET uses the same Job
 schema: ID, owner, description, status, result, error and UTC timestamps.
 Missing or invalid credentials return 401; invalid bodies return 422. Valid
 UUID `X-Request-ID` headers are preserved (canonicalized); others are replaced.
@@ -104,8 +108,9 @@ There is no reconciliation or remediation process in this slice.
 PostgreSQL commit and broker publication are **not atomic**. If publication fails,
 the gateway returns 503 with the job ID and attempts to mark the job failed. An
 ambiguous broker acknowledgement can race with processing. Query the returned ID;
-automatically retrying POST can create another job. A transactional outbox and
-submission idempotency are not implemented, and exactly-once delivery is not claimed.
+retrying POST with the same key returns that failed job without publishing it
+again. A transactional outbox is not implemented, and exactly-once delivery is
+not claimed.
 
 ## Development and tests
 
@@ -113,7 +118,8 @@ submission idempotency are not implemented, and exactly-once delivery is not cla
 python -m venv .venv
 # POSIX: source .venv/bin/activate
 # PowerShell: .venv\Scripts\Activate.ps1
-python -m pip install -e ".[api,data,worker,observability,dev]"
+python -m pip install --require-hashes -r requirements-dev.lock
+python -m pip install --no-deps -e .
 python -m pytest
 python -m ruff check .
 python -m ruff format --check .
@@ -121,10 +127,13 @@ python -m mypy
 python -m pip check
 ```
 
-GNU Make equivalents: `make install`, `make check`, `make test`, `make lint`,
-`make typecheck`. Dependency extras separate API, database and queue tooling.
+GNU Make equivalents: `make install-locked`, `make check`, `make test`, `make lint`,
+`make typecheck`. `make lock` regenerates both hash-pinned lock files with pip-tools.
+Dependency extras separate API, database and queue tooling.
 The observability extra contains the OpenTelemetry SDK, exporters, and framework instrumentations used by the services.
-A dependency lock and immutable image digests are still pending.
+Application builds install the runtime lock before installing the local package
+without dependency resolution. External images retain readable version tags and
+are pinned to registry digests.
 
 Tests use explicit mock transports for unit isolation and label these as unit
 checks. Real integration tests require the running Compose stack and opt-in:
@@ -147,6 +156,7 @@ by that service and run `uvicorn incidentpilot.services.<service>.app:create_app
 Worker command: `celery -A incidentpilot.services.worker.app:app worker
 --concurrency=1 --loglevel=INFO`. Run workers in Linux containers.
 
-See [architecture](docs/architecture.md), [observability](docs/observability.md), and [validation](docs/validation.md).
+See [architecture](docs/architecture.md), [hardening](docs/hardening.md),
+[observability](docs/observability.md), and [validation](docs/validation.md).
 The [evidence-plane guide](docs/evidence-plane.md) documents the bounded read-only
 operator API and its enforced permission boundary.

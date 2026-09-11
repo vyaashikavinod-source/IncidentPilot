@@ -68,3 +68,16 @@ The final command results are recorded in the task completion report. FastAPI an
 Starlette currently emit two upstream test-client deprecation warnings. Celery
 emits a pending-deprecation warning about broker retry settings during a forced
 disconnect. These warnings are visible and are not suppressed.
+
+## September 11 hardening validation
+
+Migration `0003_job_idempotency` reached head on the existing volume and on a
+temporary empty database; the clean catalog contained the owner/key unique
+constraint. The temporary database was removed afterward. Six concurrent gateway
+submissions produced one job and one queue publication, payload conflict returned
+409, owner scoping allowed independent rows, and replay survived data and gateway
+restarts. Queued work survived a worker restart; duplicate Celery deliveries were
+terminally idempotent; a Redis interruption produced a durable failed job whose
+same-key retry did not republish. All six live integration tests passed, including
+the read-only evidence queries. Hash-verified application images built
+successfully from the pinned runtime lock.

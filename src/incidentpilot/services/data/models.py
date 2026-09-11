@@ -3,7 +3,7 @@
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import CheckConstraint, DateTime, Enum, String, func
+from sqlalchemy import CheckConstraint, DateTime, Enum, String, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -23,11 +23,14 @@ class JobRecord(Base):
             "(status IN ('queued', 'running') AND result IS NULL AND error IS NULL)",
             name="job_outcome",
         ),
+        UniqueConstraint("owner_id", "idempotency_key", name="uq_jobs_owner_idempotency_key"),
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     owner_id: Mapped[str] = mapped_column(String(100), index=True)
     description: Mapped[str] = mapped_column(String(1000))
+    idempotency_key: Mapped[str] = mapped_column(String(128))
+    payload_sha256: Mapped[str] = mapped_column(String(64))
     status: Mapped[JobStatus] = mapped_column(
         Enum(
             JobStatus,

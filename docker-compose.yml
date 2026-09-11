@@ -21,7 +21,7 @@ x-http-health: &http-health
 
 services:
   postgres:
-    image: postgres:16-bookworm
+    image: postgres:16-bookworm@sha256:bb3e1a57e5407e0a5280b4211980a5e537f4abd234a87014ac979849a78dd825
     environment:
       POSTGRES_DB: incidentpilot
       POSTGRES_PASSWORD: ${INCIDENTPILOT_POSTGRES_ADMIN_PASSWORD:?set a local admin password}
@@ -38,7 +38,7 @@ services:
     mem_limit: 512m
 
   redis:
-    image: redis:7.4-bookworm
+    image: redis:7.4-bookworm@sha256:71da9275c5f3fcb97d0fa0c8c5b36cc995327265420f17a04bfd544f458059f7
     command: [redis-server, --appendonly, "yes", --maxmemory, 128mb, --maxmemory-policy, noeviction]
     volumes:
       - redis_data:/data
@@ -54,7 +54,6 @@ services:
     <<: *app
     build:
       context: .
-      args: {SERVICE_EXTRAS: data}
     command: [alembic, upgrade, head]
     environment: &data-env
       INCIDENTPILOT_SERVICE_NAME: data
@@ -68,7 +67,6 @@ services:
     networks: [application, evidence]
     build:
       context: .
-      args: {SERVICE_EXTRAS: "api,data,observability"}
     command: [uvicorn, incidentpilot.services.data.app:create_app, --factory, --host, 0.0.0.0, --port, "8000", --no-access-log]
     environment:
       <<: *data-env
@@ -83,7 +81,6 @@ services:
     networks: [application, evidence]
     build:
       context: .
-      args: {SERVICE_EXTRAS: "api,observability"}
     command: [uvicorn, incidentpilot.services.auth.app:create_app, --factory, --host, 0.0.0.0, --port, "8000", --no-access-log]
     environment:
       INCIDENTPILOT_SERVICE_NAME: auth
@@ -96,7 +93,6 @@ services:
     <<: *app
     build:
       context: .
-      args: {SERVICE_EXTRAS: "api,worker,observability"}
     command: [uvicorn, incidentpilot.services.gateway.app:create_app, --factory, --host, 0.0.0.0, --port, "8000", --no-access-log]
     ports: ["127.0.0.1:${INCIDENTPILOT_GATEWAY_PORT:-8000}:8000"]
     networks: [application, evidence, edge]
@@ -121,7 +117,6 @@ services:
     networks: [application, evidence]
     build:
       context: .
-      args: {SERVICE_EXTRAS: "api,worker,observability"}
     # Solo keeps this single-worker sandbox's in-process Prometheus registry coherent.
     command: [celery, -A, incidentpilot.services.worker.app:app, worker, --loglevel=INFO, --pool=solo, --concurrency=1, --hostname=worker@incidentpilot]
     environment:
@@ -147,7 +142,6 @@ services:
     <<: *app
     build:
       context: .
-      args: {SERVICE_EXTRAS: "api,observability"}
     command: [uvicorn, incidentpilot.services.control_plane.app:create_app, --factory, --host, 0.0.0.0, --port, "8000", --no-access-log]
     ports: ["127.0.0.1:${INCIDENTPILOT_CONTROL_PLANE_PORT:-8001}:8000"]
     networks: [evidence, edge]
@@ -171,7 +165,7 @@ services:
     healthcheck: *http-health
 
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:0.132.0
+    image: otel/opentelemetry-collector-contrib:0.132.0@sha256:e0f565815b2b8e78eb9fdbb80f6190c921ab323aaa8ccceab3255c6d4225f4af
     command: [--config=/etc/otelcol-contrib/config.yaml]
     volumes:
       - ./infra/otel/collector.yaml:/etc/otelcol-contrib/config.yaml:ro
@@ -186,7 +180,7 @@ services:
     mem_limit: 256m
 
   prometheus:
-    image: prom/prometheus:v3.5.0
+    image: prom/prometheus:v3.5.0@sha256:63805ebb8d2b3920190daf1cb14a60871b16fd38bed42b857a3182bc621f4996
     command: [--config.file=/etc/prometheus/prometheus.yml, --storage.tsdb.path=/prometheus, --storage.tsdb.retention.time=7d, --storage.tsdb.retention.size=512MB]
     volumes:
       - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
@@ -199,7 +193,7 @@ services:
     mem_limit: 512m
 
   loki:
-    image: grafana/loki:3.5.3
+    image: grafana/loki:3.5.3@sha256:3165cecce301ce5b9b6e3530284b080934a05cd5cafac3d3d82edcb887b45ecd
     command: [-config.file=/etc/loki/config.yaml]
     volumes:
       - ./infra/loki/config.yaml:/etc/loki/config.yaml:ro
@@ -212,7 +206,7 @@ services:
     mem_limit: 512m
 
   tempo:
-    image: grafana/tempo:2.8.2
+    image: grafana/tempo:2.8.2@sha256:0ef775495967cd5d7a6b2e146b6ea695d624803c8db8349fb8ce4164f719f9b7
     command: [-config.file=/etc/tempo/config.yaml]
     volumes:
       - ./infra/tempo/config.yaml:/etc/tempo/config.yaml:ro
@@ -225,7 +219,7 @@ services:
     mem_limit: 512m
 
   grafana:
-    image: grafana/grafana:12.1.1
+    image: grafana/grafana:12.1.1@sha256:a1701c2180249361737a99a01bc770db39381640e4d631825d38ff4535efa47d
     ports: ["127.0.0.1:3000:3000"]
     environment:
       GF_SECURITY_ADMIN_USER: ${INCIDENTPILOT_GRAFANA_ADMIN_USER:-sandbox}
