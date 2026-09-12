@@ -1,5 +1,9 @@
 # IncidentPilot
 
+Phase 2 adds operator-side failure benchmark infrastructure and deterministic
+ground-truth scoring. See [chaos and evaluation](docs/chaos-evaluation.md). It does
+not implement an autonomous incident agent or remediation execution.
+
 Phase 1 application slice: an asynchronous job workflow using FastAPI,
 PostgreSQL, Redis and Celery. Service code and Compose configuration are present;
 see `docs/validation.md` for what has actually been executed in this environment.

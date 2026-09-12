@@ -5,6 +5,8 @@ __pycache__/
 dist/
 build/
 .pytest_cache/
+.pytest-tmp/
+.test-tmp/
 .mypy_cache/
 .ruff_cache/
 .coverage
@@ -12,10 +14,12 @@ build/
 coverage.xml
 htmlcov/
 .env
+.incidentpilot-chaos-active.json
+evaluation/runs/*
+!evaluation/runs/.gitkeep
 .env.*
 !.env.example
 *.log
 .idea/
 .vscode/
 .DS_Store
-

@@ -81,3 +81,20 @@ terminally idempotent; a Redis interruption produced a durable failed job whose
 same-key retry did not republish. All six live integration tests passed, including
 the read-only evidence queries. Hash-verified application images built
 successfully from the pinned runtime lock.
+
+## September 12 Phase 2 validation
+
+The operator-side chaos harness ran all nine catalog scenarios serially against
+the live Compose sandbox. Every run injected its declared failure, captured the
+expected bounded evidence through the read-only control-plane API, restored the
+affected service, and waited for control-plane readiness to recover. The final
+run completed with 9 passed, 107 deselected, and 3 visible upstream/cache
+warnings in 314.17 seconds.
+
+Each run produced an ignored, stable manifest with scenario and private
+ground-truth checksums, repository revision, Compose and image provenance,
+timestamps, injection and recovery results, and evidence file references.
+Inspection confirmed that evidence snapshots contain no private root-cause
+field. Imports inside the rebuilt control-plane image confirmed that neither
+`incidentpilot.chaos` nor `incidentpilot.evaluation` is present in service
+images.

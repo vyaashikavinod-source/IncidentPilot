@@ -1,6 +1,6 @@
 PYTHON ?= python
 
-.PHONY: install install-locked lock check test lint typecheck format
+.PHONY: install install-locked lock check test lint typecheck format chaos-list
 install:
 	$(PYTHON) -m pip install -e ".[api,data,worker,observability,dev]"
 install-locked:
@@ -19,3 +19,5 @@ typecheck:
 	$(PYTHON) -m mypy
 format:
 	$(PYTHON) -m ruff format .
+chaos-list:
+	$(PYTHON) -m incidentpilot.chaos list

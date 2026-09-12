@@ -40,7 +40,10 @@ packages = ["src/incidentpilot"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--strict-config --strict-markers --cov=incidentpilot.shared --cov-report=term-missing --cov-report=xml --cov-fail-under=90"
-markers = ["integration: requires the explicitly enabled real Docker Compose sandbox"]
+markers = [
+  "integration: requires the explicitly enabled real Docker Compose sandbox",
+  "chaos_integration: mutates and restores the explicitly enabled local Compose sandbox",
+]
 
 [tool.coverage.run]
 branch = true

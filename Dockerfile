@@ -12,6 +12,8 @@ RUN groupadd --gid 10001 app && useradd --uid 10001 --gid app --no-create-home a
 WORKDIR /app
 COPY --from=builder /opt/venv /opt/venv
 COPY src ./src
+# Operator-only chaos/evaluation code is deliberately absent from service images.
+RUN rm -rf ./src/incidentpilot/chaos ./src/incidentpilot/evaluation
 COPY alembic.ini ./
 COPY migrations ./migrations
 USER 10001:10001

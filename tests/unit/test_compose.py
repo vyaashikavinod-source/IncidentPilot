@@ -62,3 +62,17 @@ def test_control_plane_has_no_mutation_credentials_or_runtime_control() -> None:
     assert "/var/run/docker.sock" not in str(service.get("volumes", []))
     assert service["read_only"] is True
     assert "ALL" in service["cap_drop"]
+
+
+def test_operator_chaos_and_private_truth_are_absent_from_service_images() -> None:
+    root = Path(__file__).resolve().parents[2]
+    dockerfile = (root / "Dockerfile").read_text()
+    dockerignore = (root / ".dockerignore").read_text()
+    compose = cast(dict[str, Any], yaml.safe_load((root / "docker-compose.yml").read_text()))
+    assert "rm -rf ./src/incidentpilot/chaos ./src/incidentpilot/evaluation" in dockerfile
+    assert "!chaos" not in dockerignore
+    for service in cast(dict[str, dict[str, Any]], compose["services"]).values():
+        assert "/var/run/docker.sock" not in str(service.get("volumes", []))
+        assert not service.get("privileged", False)
+        assert "chaos/ground_truth" not in str(service.get("volumes", []))
+        assert "evaluation/ground_truth" not in str(service.get("volumes", []))
