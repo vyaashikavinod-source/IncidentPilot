@@ -15,11 +15,13 @@ def test_only_operator_interfaces_have_host_edge_access() -> None:
     assert services["gateway"]["networks"] == ["application", "evidence", "edge"]
     assert services["grafana"]["networks"] == ["application", "edge"]
     assert services["control-plane"]["networks"] == ["evidence", "edge"]
+    assert services["agent"]["networks"] == ["application", "evidence", "edge"]
     assert services["gateway"]["ports"] == ["127.0.0.1:${INCIDENTPILOT_GATEWAY_PORT:-8000}:8000"]
     assert services["grafana"]["ports"] == ["127.0.0.1:3000:3000"]
     assert services["control-plane"]["ports"] == [
         "127.0.0.1:${INCIDENTPILOT_CONTROL_PLANE_PORT:-8001}:8000"
     ]
+    assert services["agent"]["ports"] == ["127.0.0.1:${INCIDENTPILOT_AGENT_PORT:-8002}:8000"]
     for name in {
         "auth",
         "data",
@@ -34,6 +36,20 @@ def test_only_operator_interfaces_have_host_edge_access() -> None:
     }:
         assert "edge" not in services[name].get("networks", [])
         assert "ports" not in services[name]
+
+
+def test_agent_has_evidence_and_data_only_without_execution_capabilities() -> None:
+    root = Path(__file__).resolve().parents[2]
+    compose = cast(dict[str, Any], yaml.safe_load((root / "docker-compose.yml").read_text()))
+    service = cast(dict[str, Any], compose["services"])["agent"]
+    environment = cast(dict[str, str], service["environment"])
+    assert "INCIDENTPILOT_EVIDENCE_URL" in environment
+    assert "INCIDENTPILOT_DATA_URL" in environment
+    assert not ({"INCIDENTPILOT_DATABASE_URL", "INCIDENTPILOT_BROKER_URL"} & environment.keys())
+    assert not service.get("privileged", False)
+    assert service["read_only"] is True
+    assert "/var/run/docker.sock" not in str(service.get("volumes", []))
+    assert "ALL" in service["cap_drop"]
 
 
 def test_observability_containers_are_unprivileged_without_docker_socket() -> None:

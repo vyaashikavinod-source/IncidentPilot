@@ -124,3 +124,24 @@ class ControlPlaneSettings(HTTPSettings):
     @classmethod
     def validate_source_url(cls, value: str) -> str:
         return ClientSettings.http_url(value)
+
+
+class AgentSettings(HTTPSettings):
+    data_url: str = "http://data:8000"
+    evidence_url: str = "http://control-plane:8000"
+    internal_token: SecretStr = Field(min_length=16)
+    llm_provider: Literal["openai", "fake"] = "fake"
+    llm_model: str = Field(default="gpt-5-mini", min_length=1, max_length=100)
+    llm_api_key: SecretStr | None = None
+    llm_timeout: float = Field(default=20, gt=0, le=60)
+    llm_max_output_tokens: int = Field(default=1200, ge=100, le=4000)
+    investigation_max_turns: int = Field(default=6, ge=1, le=12)
+    investigation_max_tool_calls: int = Field(default=8, ge=1, le=20)
+    investigation_max_seconds: int = Field(default=90, ge=10, le=300)
+    investigation_max_evidence_bytes: int = Field(default=100_000, ge=10_000, le=500_000)
+    llm_temperature: float = Field(default=0, ge=0, le=1)
+
+    @field_validator("data_url", "evidence_url")
+    @classmethod
+    def validate_agent_url(cls, value: str) -> str:
+        return ClientSettings.http_url(value)

@@ -98,3 +98,25 @@ Inspection confirmed that evidence snapshots contain no private root-cause
 field. Imports inside the rebuilt control-plane image confirmed that neither
 `incidentpilot.chaos` nor `incidentpilot.evaluation` is present in service
 images.
+
+## September 15 Phase 3 validation
+
+Migration `0004_incidents` reached head on the existing PostgreSQL volume. The rebuilt `data`,
+`migrate`, and `agent` images started successfully, and every long-running sandbox service returned
+to healthy or running state. A live incident was created through the localhost agent API, retrieved
+through the same API, and retrieved again after restarting the agent container. This confirms that
+the agent persists through typed Data-service calls rather than process memory or a direct database
+connection.
+
+The live audit verifier accepted the persisted incident-created chain. Unit tests detected record
+content modification, deletion, and reordering. The rebuilt agent image contains neither the chaos
+nor evaluation package. Its environment has no database or broker URL, it has no Docker socket or
+privileged mode, the evidence control plane still exposes only GET operations, and the agent OpenAPI
+contains no execute, command, restart, deployment, rollback, or chaos route. Agent-specific bounded
+Prometheus metrics are present on its isolated `/metrics` registry.
+
+No `INCIDENTPILOT_LLM_API_KEY` was present in the process environment or local untracked `.env`.
+The live investigation endpoint therefore returned the explicit 503
+`real_llm_provider_not_configured` response. The opt-in live agent integration passed ingestion,
+persistence, retrieval, audit creation, and provider gating. No fake diagnosis was run against the
+live stack, no Phase 2 scenario was reinjected, and no diagnostic performance result was fabricated.

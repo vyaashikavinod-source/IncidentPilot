@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "incidentpilot"
 version = "0.1.0"
-description = "IncidentPilot Phase 1 monitored sandbox foundation"
+description = "IncidentPilot monitored sandbox and evidence-driven investigation service"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = ["pydantic-settings>=2.7,<3"]
@@ -43,6 +43,7 @@ addopts = "--strict-config --strict-markers --cov=incidentpilot.shared --cov-rep
 markers = [
   "integration: requires the explicitly enabled real Docker Compose sandbox",
   "chaos_integration: mutates and restores the explicitly enabled local Compose sandbox",
+  "agent_integration: requires the explicitly enabled live incident service",
 ]
 
 [tool.coverage.run]

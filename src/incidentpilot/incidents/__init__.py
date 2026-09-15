@@ -1,0 +1,1 @@
+"""Typed incident investigation domain."""

@@ -1,7 +1,13 @@
 import statistics
 
 from incidentpilot.chaos.models import GroundTruth
-from incidentpilot.evaluation.models import AggregateReport, DiagnosisSubmission, Score
+from incidentpilot.evaluation.models import (
+    AgentAggregateReport,
+    AgentScenarioResult,
+    AggregateReport,
+    DiagnosisSubmission,
+    Score,
+)
 
 
 def normalize(value: str) -> str:
@@ -58,4 +64,27 @@ def aggregate(scores: list[Score], truths: dict[str, GroundTruth]) -> AggregateR
             result.diagnosis_latency_seconds for result in scores
         ),
         failure_breakdown=failures,
+    )
+
+
+def aggregate_agent(results: list[AgentScenarioResult]) -> AgentAggregateReport:
+    if not results:
+        raise ValueError("at least one agent result is required")
+    scores = [item.score for item in results]
+    durations = sorted(item.diagnosis_latency_seconds for item in scores)
+    rank = max(0, min(len(durations) - 1, int(0.95 * len(durations) + 0.999999) - 1))
+    cited = sum(item.evidence_reference_count for item in scores)
+    unsupported = sum(len(item.unsupported_evidence_references) for item in scores)
+    count = len(results)
+    return AgentAggregateReport(
+        scenario_count=count,
+        root_cause_accuracy=sum(item.root_cause_correct for item in scores) / count,
+        affected_service_accuracy=sum(item.affected_service_correct for item in scores) / count,
+        failure_class_accuracy=sum(item.failure_class_correct for item in scores) / count,
+        scenario_pass_rate=sum(item.passed for item in scores) / count,
+        median_investigation_time_seconds=statistics.median(durations),
+        p95_investigation_time_seconds=durations[rank],
+        median_tool_calls=statistics.median(item.tool_call_count for item in results),
+        unsupported_evidence_reference_rate=unsupported / cited if cited else 0,
+        failures=tuple(item.scenario_id for item in scores if not item.passed),
     )

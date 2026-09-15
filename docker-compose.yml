@@ -164,6 +164,34 @@ services:
       tempo: {condition: service_started}
     healthcheck: *http-health
 
+  agent:
+    <<: *app
+    build:
+      context: .
+    command: [uvicorn, incidentpilot.services.agent.app:create_app, --factory, --host, 0.0.0.0, --port, "8000", --no-access-log]
+    ports: ["127.0.0.1:${INCIDENTPILOT_AGENT_PORT:-8002}:8000"]
+    networks: [application, evidence, edge]
+    environment:
+      INCIDENTPILOT_SERVICE_NAME: agent
+      INCIDENTPILOT_DATA_URL: http://data:8000
+      INCIDENTPILOT_EVIDENCE_URL: http://control-plane:8000
+      INCIDENTPILOT_INTERNAL_TOKEN: ${INCIDENTPILOT_INTERNAL_TOKEN:?set a local internal token}
+      INCIDENTPILOT_LLM_PROVIDER: ${INCIDENTPILOT_LLM_PROVIDER:-fake}
+      INCIDENTPILOT_LLM_MODEL: ${INCIDENTPILOT_LLM_MODEL:-gpt-5-mini}
+      INCIDENTPILOT_LLM_API_KEY: ${INCIDENTPILOT_LLM_API_KEY:-}
+      INCIDENTPILOT_LLM_TIMEOUT: "20"
+      INCIDENTPILOT_LLM_MAX_OUTPUT_TOKENS: "1200"
+      INCIDENTPILOT_INVESTIGATION_MAX_TURNS: "6"
+      INCIDENTPILOT_INVESTIGATION_MAX_TOOL_CALLS: "8"
+      INCIDENTPILOT_INVESTIGATION_MAX_SECONDS: "90"
+      INCIDENTPILOT_INVESTIGATION_MAX_EVIDENCE_BYTES: "100000"
+      INCIDENTPILOT_TELEMETRY_ENABLED: "true"
+      INCIDENTPILOT_OTLP_ENDPOINT: http://otel-collector:4318
+    depends_on:
+      data: {condition: service_healthy}
+      control-plane: {condition: service_healthy}
+    healthcheck: *http-health
+
   otel-collector:
     image: otel/opentelemetry-collector-contrib:0.132.0@sha256:e0f565815b2b8e78eb9fdbb80f6190c921ab323aaa8ccceab3255c6d4225f4af
     command: [--config=/etc/otelcol-contrib/config.yaml]

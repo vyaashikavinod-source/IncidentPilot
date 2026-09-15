@@ -13,7 +13,14 @@ from sqlalchemy import create_engine, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
-from incidentpilot.services.data.models import DeploymentRecord, JobRecord
+from incidentpilot.incidents.audit import AuditAppend, AuditRecord, make_record
+from incidentpilot.incidents.models import Incident
+from incidentpilot.services.data.models import (
+    AuditRecordRow,
+    DeploymentRecord,
+    IncidentRecord,
+    JobRecord,
+)
 from incidentpilot.shared.config import DataSettings
 from incidentpilot.shared.evidence import Deployment
 from incidentpilot.shared.http import configure_http
@@ -171,5 +178,98 @@ def create_app(settings: DataSettings | None = None) -> FastAPI:
             record.updated_at = datetime.now(UTC)
             session.flush()
             return Job.model_validate(record)
+
+    def find_incident(session: Session, incident_id: UUID, lock: bool = False) -> IncidentRecord:
+        query = select(IncidentRecord).where(IncidentRecord.id == incident_id)
+        if lock:
+            query = query.with_for_update()
+        record = session.scalar(query)
+        if record is None:
+            raise HTTPException(404, "incident_not_found")
+        return record
+
+    @app.post("/v1/incidents", status_code=201, dependencies=[Depends(internal)])
+    def create_incident(body: Incident) -> Incident:
+        with sessions.begin() as session:
+            if session.get(IncidentRecord, body.incident_id):
+                raise HTTPException(409, "incident_exists")
+            session.add(IncidentRecord(id=body.incident_id, document=body.model_dump(mode="json")))
+        return body
+
+    @app.get("/v1/incidents/{incident_id}", dependencies=[Depends(internal)])
+    def get_incident(incident_id: UUID) -> Incident:
+        with sessions() as session:
+            return Incident.model_validate(find_incident(session, incident_id).document)
+
+    @app.put("/v1/incidents/{incident_id}", dependencies=[Depends(internal)])
+    def update_incident(incident_id: UUID, body: Incident) -> Incident:
+        if incident_id != body.incident_id:
+            raise HTTPException(422, "incident_identity_mismatch")
+        with sessions.begin() as session:
+            record = find_incident(session, incident_id, lock=True)
+            record.document = body.model_dump(mode="json")
+            record.updated_at = datetime.now(UTC)
+        return body
+
+    @app.post(
+        "/v1/incidents/{incident_id}/audit",
+        status_code=201,
+        dependencies=[Depends(internal)],
+    )
+    def append_audit(incident_id: UUID, body: AuditAppend) -> AuditRecord:
+        with sessions.begin() as session:
+            find_incident(session, incident_id, lock=True)
+            previous = session.scalar(
+                select(AuditRecordRow)
+                .where(AuditRecordRow.incident_id == incident_id)
+                .order_by(AuditRecordRow.sequence.desc())
+                .limit(1)
+            )
+            item = make_record(
+                sequence=(previous.sequence + 1 if previous else 1),
+                event_type=body.event_type,
+                incident_id=incident_id,
+                actor=body.actor,
+                metadata=body.metadata,
+                previous_hash=previous.record_hash if previous else None,
+            )
+            session.add(
+                AuditRecordRow(
+                    id=item.audit_id,
+                    incident_id=incident_id,
+                    sequence=item.sequence,
+                    timestamp=item.timestamp,
+                    event_type=item.event_type,
+                    actor=item.actor,
+                    event_metadata=item.metadata,
+                    previous_hash=item.previous_hash,
+                    record_hash=item.record_hash,
+                )
+            )
+        return item
+
+    @app.get("/v1/incidents/{incident_id}/audit", dependencies=[Depends(internal)])
+    def get_audit(incident_id: UUID) -> list[AuditRecord]:
+        with sessions() as session:
+            find_incident(session, incident_id)
+            rows = session.scalars(
+                select(AuditRecordRow)
+                .where(AuditRecordRow.incident_id == incident_id)
+                .order_by(AuditRecordRow.sequence)
+            )
+            return [
+                AuditRecord(
+                    audit_id=row.id,
+                    sequence=row.sequence,
+                    timestamp=row.timestamp,
+                    event_type=row.event_type,
+                    incident_id=row.incident_id,
+                    actor=row.actor,
+                    metadata=row.event_metadata,
+                    previous_hash=row.previous_hash,
+                    record_hash=row.record_hash,
+                )
+                for row in rows
+            ]
 
     return app

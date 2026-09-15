@@ -4,8 +4,10 @@ import hashlib
 import json
 import subprocess
 import time
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 from uuid import UUID, uuid4
 
 from incidentpilot.chaos.catalog import GROUND_TRUTH, SCENARIOS, checksum, load_ground_truth
@@ -62,7 +64,9 @@ class RunExecutor:
         payload = value.model_dump(mode="json") if hasattr(value, "model_dump") else value
         path.write_text(json.dumps(payload, sort_keys=True, indent=2) + "\n", encoding="utf-8")
 
-    def run(self, scenario: Scenario) -> RunManifest:
+    def run(
+        self, scenario: Scenario, during_fault: Callable[[UUID], Any] | None = None
+    ) -> RunManifest:
         if self.active_path.exists():
             raise RuntimeError("another chaos run is active; recover it first")
         run_id = uuid4()
@@ -100,6 +104,9 @@ class RunExecutor:
             self._write(run_dir / "manifest.json", manifest)
             snapshot = capture_evidence(self.control_plane_url, scenario)
             self._write(run_dir / "evidence.json", snapshot)
+            if during_fault is not None:
+                result = during_fault(run_id)
+                self._write(run_dir / "agent-investigation.json", result)
             if time.monotonic() > deadline:
                 raise TimeoutError("scenario exceeded its hard maximum duration")
         except Exception:

@@ -3,7 +3,16 @@
 from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import CheckConstraint, DateTime, Enum, String, UniqueConstraint, func
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -61,3 +70,33 @@ class DeploymentRecord(Base):
     deployed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     status: Mapped[str] = mapped_column(String(32))
     deployment_metadata: Mapped[dict[str, str]] = mapped_column(JSONB, default=dict)
+
+
+class IncidentRecord(Base):
+    __tablename__ = "incidents"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    document: Mapped[dict[str, object]] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class AuditRecordRow(Base):
+    __tablename__ = "incident_audit_records"
+    __table_args__ = (
+        UniqueConstraint("incident_id", "sequence", name="uq_audit_incident_sequence"),
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    incident_id: Mapped[UUID] = mapped_column(
+        ForeignKey("incidents.id", ondelete="RESTRICT"), index=True
+    )
+    sequence: Mapped[int] = mapped_column(Integer)
+    timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    event_type: Mapped[str] = mapped_column(String(100))
+    actor: Mapped[str] = mapped_column(String(200))
+    event_metadata: Mapped[dict[str, object]] = mapped_column(JSONB)
+    previous_hash: Mapped[str | None] = mapped_column(String(64))
+    record_hash: Mapped[str] = mapped_column(String(64), unique=True)

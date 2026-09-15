@@ -1,5 +1,9 @@
 # IncidentPilot
 
+Phase 3 adds a bounded evidence-driven investigation service. It produces structured diagnoses and
+proposal-only remediation recommendations, then stops. See
+[agent investigation](docs/agent-investigation.md). It cannot execute remediation.
+
 Phase 2 adds operator-side failure benchmark infrastructure and deterministic
 ground-truth scoring. See [chaos and evaluation](docs/chaos-evaluation.md). It does
 not implement an autonomous incident agent or remediation execution.
@@ -7,8 +11,8 @@ not implement an autonomous incident agent or remediation execution.
 Phase 1 application slice: an asynchronous job workflow using FastAPI,
 PostgreSQL, Redis and Celery. Service code and Compose configuration are present;
 see `docs/validation.md` for what has actually been executed in this environment.
-There is no AI agent, chaos injection, remediation, incident memory, or
-infrastructure mutation API. The control plane is still a package skeleton.
+There is no remediation execution, long-term incident memory, multi-agent orchestration, or
+infrastructure mutation API. Chaos remains an operator-only host capability.
 The sandbox now includes metrics, tracing, centralized logs, and provisioned
 dashboards.
 
