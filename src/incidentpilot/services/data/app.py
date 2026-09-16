@@ -13,7 +13,11 @@ from sqlalchemy import create_engine, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
-from incidentpilot.evaluation.persistence import EvaluationRun, ManualBenchmarkRun
+from incidentpilot.evaluation.persistence import (
+    EvaluationRun,
+    EvaluationScenarioResult,
+    ManualBenchmarkRun,
+)
 from incidentpilot.incidents.approval import proposal_hash
 from incidentpilot.incidents.audit import (
     AuditAppend,
@@ -673,5 +677,67 @@ def create_app(settings: DataSettings | None = None) -> FastAPI:
             if row is None:
                 raise HTTPException(404, "evaluation_run_not_found")
             return EvaluationRun.model_validate(row.document)
+
+    @app.get("/v1/evaluation-runs", dependencies=[Depends(incident_internal)])
+    def list_completed_evaluation_runs(
+        limit: int = Query(default=20, ge=1, le=100),
+    ) -> list[EvaluationRun]:
+        with sessions() as session:
+            rows = session.scalars(
+                select(EvaluationRunRow).order_by(EvaluationRunRow.created_at.desc()).limit(limit)
+            )
+            return [
+                run
+                for row in rows
+                if (run := EvaluationRun.model_validate(row.document)).status == "completed"
+            ]
+
+    @app.post(
+        "/v1/evaluation-runs/{run_id}/scenarios",
+        dependencies=[Depends(incident_internal)],
+    )
+    def append_evaluation_scenario(run_id: UUID, body: EvaluationScenarioResult) -> EvaluationRun:
+        with sessions.begin() as session:
+            row = session.get(EvaluationRunRow, run_id, with_for_update=True)
+            if row is None:
+                raise HTTPException(404, "evaluation_run_not_found")
+            run = EvaluationRun.model_validate(row.document)
+            if run.status in {"completed", "failed"}:
+                raise HTTPException(409, "evaluation_run_immutable")
+            previous = next(
+                (item for item in run.scenario_results if item.scenario_id == body.scenario_id),
+                None,
+            )
+            if previous is not None:
+                if previous == body:
+                    return run
+                raise HTTPException(409, "evaluation_scenario_result_conflict")
+            updated = run.model_copy(
+                update={"status": "running", "scenario_results": [*run.scenario_results, body]}
+            )
+            row.document = updated.model_dump(mode="json")
+            return updated
+
+    @app.post(
+        "/v1/evaluation-runs/{run_id}/complete",
+        dependencies=[Depends(incident_internal)],
+    )
+    def complete_evaluation_run(run_id: UUID) -> EvaluationRun:
+        with sessions.begin() as session:
+            row = session.get(EvaluationRunRow, run_id, with_for_update=True)
+            if row is None:
+                raise HTTPException(404, "evaluation_run_not_found")
+            run = EvaluationRun.model_validate(row.document)
+            if run.status == "completed":
+                return run
+            if run.status == "failed":
+                raise HTTPException(409, "evaluation_run_immutable")
+            if not run.scenario_results:
+                raise HTTPException(409, "evaluation_run_has_no_results")
+            updated = run.model_copy(
+                update={"status": "completed", "completed_at": datetime.now(UTC)}
+            )
+            row.document = updated.model_dump(mode="json")
+            return updated
 
     return app

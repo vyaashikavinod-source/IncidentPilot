@@ -27,3 +27,20 @@ The Phase 2 scorer reads private ground truth only after investigation. `ManualD
 participant pseudonym, timing, submitted diagnosis, and consulted evidence without private truth.
 The comparison report emits `MANUAL BASELINE PENDING — NO RECORDED HUMAN RUNS` without real human
 records. Until credentials exist: **REAL AGENT EVALUATION BLOCKED — NO CONFIGURED LLM PROVIDER**.
+
+## Persisted evaluation workflow
+
+The Data service stores typed scenario results under an evaluation run. A run moves from `pending`
+to `running` when its first result is appended, and can become `completed` only when it has at
+least one internally consistent result and a completion timestamp. Completed and failed runs are
+immutable. The bounded completed-run listing excludes unfinished fixtures and does not claim they
+are real-agent evaluations.
+
+`incidentpilot.evaluation.manual` is a narrow authenticated operator client. It supports `start`,
+`inspect`, `evidence`, and `submit`, and only calls the configured Data service. It has no direct
+PostgreSQL, arbitrary URL, shell, or scoring capability. Human submissions are finalized exactly
+once before separate evaluator code may persist a score.
+
+Reports are calculated deterministically from completed stored results. They retain unavailable
+token or cost values as unavailable rather than converting them to zero; they also include failed
+scenarios in every aggregate and breakdown.
