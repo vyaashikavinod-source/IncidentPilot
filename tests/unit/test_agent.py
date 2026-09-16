@@ -360,8 +360,23 @@ class MemoryStore:
     def get(self, incident_id: UUID) -> Incident:
         return self.items[incident_id].model_copy(deep=True)
 
-    def list_incidents(self, *, limit: int, offset: int) -> IncidentList:
+    def list_incidents(
+        self,
+        *,
+        limit: int,
+        offset: int,
+        status: str | None = None,
+        severity: str | None = None,
+        affected_service: str | None = None,
+    ) -> IncidentList:
         items = sorted(self.items.values(), key=lambda item: item.created_at, reverse=True)
+        items = [
+            item
+            for item in items
+            if (status is None or item.status == status)
+            and (severity is None or item.severity == severity)
+            and (affected_service is None or item.affected_service_hint == affected_service)
+        ]
         page = items[offset : offset + limit]
         return IncidentList(
             items=[
