@@ -272,6 +272,18 @@ services:
     security_opt: [no-new-privileges:true]
     mem_limit: 512m
 
+  frontend:
+    build:
+      context: ./frontend
+    ports: ["127.0.0.1:3001:8080"]
+    networks: [edge]
+    depends_on:
+      agent: {condition: service_healthy}
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
 networks:
   application:
     internal: true
