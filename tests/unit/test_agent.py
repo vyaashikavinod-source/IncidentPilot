@@ -348,6 +348,28 @@ def test_provider_rejects_malformed_output_and_normalizes_timeout(
         provider.decide(SYSTEM_POLICY, "data")
 
 
+def test_incident_list_omits_unset_filters_and_forwards_set_filters() -> None:
+    seen: list[httpx.URL] = []
+
+    def respond(request: httpx.Request) -> httpx.Response:
+        seen.append(request.url)
+        return httpx.Response(200, json={"items": [], "limit": 25, "offset": 0})
+
+    store = IncidentStore("http://data", "x" * 16, 1, httpx.MockTransport(respond))
+    store.list_incidents(limit=25, offset=0)
+    store.list_incidents(
+        limit=25, offset=0, status="open", severity="high", affected_service="data"
+    )
+    assert set(seen[0].params) == {"limit", "offset"}
+    assert dict(seen[1].params) == {
+        "limit": "25",
+        "offset": "0",
+        "status": "open",
+        "severity": "high",
+        "affected_service": "data",
+    }
+
+
 class MemoryStore:
     def __init__(self) -> None:
         self.items: dict[UUID, Incident] = {}

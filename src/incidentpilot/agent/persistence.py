@@ -66,16 +66,17 @@ class IncidentStore:
         severity: str | None = None,
         affected_service: str | None = None,
     ) -> IncidentList:
+        params = {
+            "limit": limit,
+            "offset": offset,
+            "status": status,
+            "severity": severity,
+            "affected_service": affected_service,
+        }
         response = self.http.get(
             "/v1/incidents",
             headers=self.headers,
-            params={
-                "limit": limit,
-                "offset": offset,
-                "status": status,
-                "severity": severity,
-                "affected_service": affected_service,
-            },
+            params={key: value for key, value in params.items() if value is not None},
         )
         try:
             response.raise_for_status()
