@@ -173,6 +173,10 @@ class Incident(StrictModel):
     reflection: Reflection | None = None
     provider_request_count: int = Field(default=0, ge=0)
     estimated_cost_usd: float | None = Field(default=None, ge=0)
+    input_cost: float | None = Field(default=None, ge=0)
+    output_cost: float | None = Field(default=None, ge=0)
+    cost_currency: str | None = Field(default=None, max_length=3)
+    pricing_source_version: str | None = Field(default=None, max_length=100)
     budget_termination_reason: str | None = Field(default=None, max_length=200)
     provider_retry_count: int = Field(default=0, ge=0)
     provider_error_category: str | None = Field(default=None, max_length=64)

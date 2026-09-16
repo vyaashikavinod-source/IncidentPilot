@@ -38,6 +38,13 @@ class InvestigationEngine:
         max_context_bytes: int | None = None,
         provider_retry_limit: int = 0,
         provider_retry_backoff_seconds: float = 0,
+        input_cost_per_million: float | None = None,
+        output_cost_per_million: float | None = None,
+        cost_currency: str = "USD",
+        pricing_source_version: str | None = None,
+        max_cost: float | None = None,
+        max_evidence_items: int | None = None,
+        max_evidence_payload_bytes: int | None = None,
     ) -> None:
         self.provider, self.tools = provider, tools
         self.max_turns, self.max_tool_calls = max_turns, max_tool_calls
@@ -47,6 +54,12 @@ class InvestigationEngine:
         self.max_context_bytes = max_context_bytes
         self.provider_retry_limit = provider_retry_limit
         self.provider_retry_backoff_seconds = provider_retry_backoff_seconds
+        self.input_cost_per_million = input_cost_per_million
+        self.output_cost_per_million = output_cost_per_million
+        self.cost_currency, self.pricing_source_version = cost_currency, pricing_source_version
+        self.max_cost = max_cost
+        self.max_evidence_items = max_evidence_items or max_tool_calls
+        self.max_evidence_payload_bytes = max_evidence_payload_bytes
 
     def run(self, incident: Incident) -> Incident:
         started = time.monotonic()
@@ -58,6 +71,12 @@ class InvestigationEngine:
                 raise InvestigationError("investigation wall-clock limit reached")
             if incident.provider_request_count >= self.max_provider_calls:
                 raise InvestigationError("provider-call budget reached")
+            if (
+                self.max_cost is not None
+                and incident.estimated_cost_usd is not None
+                and incident.estimated_cost_usd >= self.max_cost
+            ):
+                raise InvestigationError("cost budget reached")
             prompt = investigation_prompt(incident)
             if self.max_context_bytes is not None and len(prompt.encode()) > self.max_context_bytes:
                 raise InvestigationError("context budget reached")
@@ -78,6 +97,18 @@ class InvestigationEngine:
                 incident.input_tokens = (incident.input_tokens or 0) + decision.input_tokens
             if decision.output_tokens is not None:
                 incident.output_tokens = (incident.output_tokens or 0) + decision.output_tokens
+            if self.input_cost_per_million is not None and self.output_cost_per_million is not None:
+                incident.input_cost = (
+                    (incident.input_tokens or 0) * self.input_cost_per_million / 1_000_000
+                )
+                incident.output_cost = (
+                    (incident.output_tokens or 0) * self.output_cost_per_million / 1_000_000
+                )
+                incident.estimated_cost_usd = incident.input_cost + incident.output_cost
+                incident.cost_currency = self.cost_currency
+                incident.pricing_source_version = self.pricing_source_version
+                if self.max_cost is not None and incident.estimated_cost_usd > self.max_cost:
+                    raise InvestigationError("cost budget reached")
             if (
                 self.max_input_tokens is not None
                 and (incident.input_tokens or 0) > self.max_input_tokens
@@ -125,6 +156,13 @@ class InvestigationEngine:
             except EvidenceToolError as exc:
                 raise InvestigationError("evidence backend failure") from exc
             payload = evidence.model_dump(mode="json")
+            if (
+                self.max_evidence_payload_bytes is not None
+                and len(json.dumps(payload)) > self.max_evidence_payload_bytes
+            ):
+                raise InvestigationError("evidence payload budget reached")
+            if len(incident.evidence) >= self.max_evidence_items:
+                raise InvestigationError("evidence-item budget reached")
             if (
                 sum(len(json.dumps(value)) for value in incident.evidence.values())
                 + len(json.dumps(payload))

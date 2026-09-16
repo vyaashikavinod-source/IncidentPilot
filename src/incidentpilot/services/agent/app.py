@@ -198,7 +198,10 @@ def create_app(
         incident.audit_references.append(start_audit.audit_id)
         try:
             memories = incident_store.search_memory(
-                MemoryQuery(affected_service=incident.affected_service_hint, limit=5)
+                MemoryQuery(
+                    affected_service=incident.affected_service_hint,
+                    limit=config.investigation_max_memory_items,
+                )
             )
         except (IncidentStoreError, AttributeError):
             memories = []
@@ -223,6 +226,13 @@ def create_app(
             max_context_bytes=config.investigation_context_bytes,
             provider_retry_limit=config.provider_retry_limit,
             provider_retry_backoff_seconds=config.provider_retry_backoff_seconds,
+            input_cost_per_million=config.llm_input_cost_per_million,
+            output_cost_per_million=config.llm_output_cost_per_million,
+            cost_currency=config.llm_pricing_currency,
+            pricing_source_version=config.llm_pricing_source_version,
+            max_cost=config.investigation_max_cost_usd,
+            max_evidence_items=config.investigation_max_evidence_items,
+            max_evidence_payload_bytes=config.investigation_max_evidence_payload_bytes,
         )
         started = time.monotonic()
         security_metrics.investigations.labels("started").inc()
