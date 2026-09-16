@@ -599,6 +599,29 @@ def create_app(settings: DataSettings | None = None) -> FastAPI:
             row.document, row.finalized = body.model_dump(mode="json"), True
         return body
 
+    @app.post(
+        "/v1/manual-benchmarks/{run_id}/evidence",
+        dependencies=[Depends(incident_internal)],
+    )
+    def record_manual_evidence(run_id: UUID, evidence_ids: list[UUID]) -> ManualBenchmarkRun:
+        if not evidence_ids or len(evidence_ids) > 100:
+            raise HTTPException(422, "manual_evidence_references_invalid")
+        with sessions.begin() as session:
+            row = session.get(ManualBenchmarkRow, run_id, with_for_update=True)
+            if row is None:
+                raise HTTPException(404, "manual_run_not_found")
+            if row.finalized:
+                raise HTTPException(409, "manual_run_already_finalized")
+            run = ManualBenchmarkRun.model_validate(row.document)
+            references = tuple(
+                dict.fromkeys((*run.evidence_references, *(str(item) for item in evidence_ids)))
+            )
+            if len(references) > 100:
+                raise HTTPException(422, "manual_evidence_references_invalid")
+            updated = run.model_copy(update={"evidence_references": references})
+            row.document = updated.model_dump(mode="json")
+            return updated
+
     @app.post("/v1/evaluation-runs", status_code=201, dependencies=[Depends(incident_internal)])
     def create_evaluation_run(body: EvaluationRun) -> EvaluationRun:
         with sessions.begin() as session:
