@@ -174,6 +174,8 @@ class Incident(StrictModel):
     provider_request_count: int = Field(default=0, ge=0)
     estimated_cost_usd: float | None = Field(default=None, ge=0)
     budget_termination_reason: str | None = Field(default=None, max_length=200)
+    provider_retry_count: int = Field(default=0, ge=0)
+    provider_error_category: str | None = Field(default=None, max_length=64)
 
     @field_validator("alert_metadata")
     @classmethod

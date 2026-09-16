@@ -220,6 +220,9 @@ def create_app(
             max_provider_calls=config.investigation_max_provider_calls,
             max_input_tokens=config.investigation_max_input_tokens,
             max_total_tokens=config.investigation_max_total_tokens,
+            max_context_bytes=config.investigation_context_bytes,
+            provider_retry_limit=config.provider_retry_limit,
+            provider_retry_backoff_seconds=config.provider_retry_backoff_seconds,
         )
         started = time.monotonic()
         security_metrics.investigations.labels("started").inc()

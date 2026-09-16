@@ -35,12 +35,18 @@ class InvestigationEngine:
         max_provider_calls: int | None = None,
         max_input_tokens: int | None = None,
         max_total_tokens: int | None = None,
+        max_context_bytes: int | None = None,
+        provider_retry_limit: int = 0,
+        provider_retry_backoff_seconds: float = 0,
     ) -> None:
         self.provider, self.tools = provider, tools
         self.max_turns, self.max_tool_calls = max_turns, max_tool_calls
         self.max_seconds, self.max_evidence_bytes = max_seconds, max_evidence_bytes
         self.max_provider_calls = max_provider_calls or max_turns
         self.max_input_tokens, self.max_total_tokens = max_input_tokens, max_total_tokens
+        self.max_context_bytes = max_context_bytes
+        self.provider_retry_limit = provider_retry_limit
+        self.provider_retry_backoff_seconds = provider_retry_backoff_seconds
 
     def run(self, incident: Incident) -> Incident:
         started = time.monotonic()
@@ -52,10 +58,20 @@ class InvestigationEngine:
                 raise InvestigationError("investigation wall-clock limit reached")
             if incident.provider_request_count >= self.max_provider_calls:
                 raise InvestigationError("provider-call budget reached")
-            try:
-                decision = self.provider.decide(SYSTEM_POLICY, investigation_prompt(incident))
-            except ProviderError as exc:
-                raise InvestigationError("provider failure") from exc
+            prompt = investigation_prompt(incident)
+            if self.max_context_bytes is not None and len(prompt.encode()) > self.max_context_bytes:
+                raise InvestigationError("context budget reached")
+            for attempt in range(self.provider_retry_limit + 1):
+                try:
+                    decision = self.provider.decide(SYSTEM_POLICY, prompt)
+                    break
+                except ProviderError as exc:
+                    incident.provider_error_category = exc.category.value
+                    if not exc.retryable or attempt >= self.provider_retry_limit:
+                        raise InvestigationError(f"provider failure: {exc.category.value}") from exc
+                    incident.provider_retry_count += 1
+                    if self.provider_retry_backoff_seconds:
+                        time.sleep(self.provider_retry_backoff_seconds)
             incident.investigation_turns = turn
             incident.provider_request_count += 1
             if decision.input_tokens is not None:

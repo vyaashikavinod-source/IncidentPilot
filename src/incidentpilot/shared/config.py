@@ -146,6 +146,8 @@ class AgentSettings(HTTPSettings):
     investigation_max_total_tokens: int = Field(default=16_000, ge=100, le=100_000)
     investigation_max_cost_usd: float | None = Field(default=None, gt=0, le=100)
     investigation_context_bytes: int = Field(default=120_000, ge=10_000, le=500_000)
+    provider_retry_limit: int = Field(default=1, ge=0, le=3)
+    provider_retry_backoff_seconds: float = Field(default=0.1, ge=0, le=5)
     investigation_max_turns: int = Field(default=6, ge=1, le=12)
     investigation_max_tool_calls: int = Field(default=8, ge=1, le=20)
     investigation_max_seconds: int = Field(default=90, ge=10, le=300)

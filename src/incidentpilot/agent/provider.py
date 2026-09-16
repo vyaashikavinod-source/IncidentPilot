@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from enum import StrEnum
 from typing import Literal, Protocol
 
 import httpx
@@ -26,8 +27,31 @@ class RemediationDraft(BaseModel):
     verification_plan: str = Field(min_length=1, max_length=1000)
 
 
+class ProviderErrorCategory(StrEnum):
+    TIMEOUT = "timeout"
+    RATE_LIMITED = "rate_limited"
+    AUTHENTICATION_FAILED = "authentication_failed"
+    PROVIDER_UNAVAILABLE = "provider_unavailable"
+    INVALID_RESPONSE = "invalid_response"
+    SCHEMA_VALIDATION_FAILED = "schema_validation_failed"
+    CONTEXT_LIMIT_EXCEEDED = "context_limit_exceeded"
+    UNKNOWN_PROVIDER_ERROR = "unknown_provider_error"
+
+
 class ProviderError(RuntimeError):
-    pass
+    def __init__(
+        self, category: ProviderErrorCategory = ProviderErrorCategory.UNKNOWN_PROVIDER_ERROR
+    ) -> None:
+        super().__init__(f"LLM request failed: {category.value}")
+        self.category = category
+
+    @property
+    def retryable(self) -> bool:
+        return self.category in {
+            ProviderErrorCategory.TIMEOUT,
+            ProviderErrorCategory.RATE_LIMITED,
+            ProviderErrorCategory.PROVIDER_UNAVAILABLE,
+        }
 
 
 class ProviderDecision(BaseModel):
@@ -60,7 +84,7 @@ class FakeProvider:
         try:
             return next(self.decisions)
         except StopIteration as exc:
-            raise ProviderError("fake provider exhausted") from exc
+            raise ProviderError(ProviderErrorCategory.PROVIDER_UNAVAILABLE) from exc
 
 
 class OpenAIProvider:
@@ -73,7 +97,7 @@ class OpenAIProvider:
         self, api_key: str, model: str, timeout: float, max_output_tokens: int, temperature: float
     ) -> None:
         if not api_key:
-            raise ProviderError("OpenAI provider requires a configured API key")
+            raise ProviderError(ProviderErrorCategory.AUTHENTICATION_FAILED)
         self.model, self.timeout = model, timeout
         self.api_key, self.max_output_tokens, self.temperature = (
             api_key,
@@ -116,5 +140,19 @@ class OpenAIProvider:
                     "output_tokens": usage.get("output_tokens"),
                 }
             )
-        except (httpx.HTTPError, KeyError, TypeError, ValueError, ValidationError) as exc:
-            raise ProviderError("LLM request failed or returned malformed output") from exc
+        except httpx.TimeoutException as exc:
+            raise ProviderError(ProviderErrorCategory.TIMEOUT) from exc
+        except httpx.HTTPStatusError as exc:
+            status = exc.response.status_code
+            category = (
+                ProviderErrorCategory.AUTHENTICATION_FAILED
+                if status in {401, 403}
+                else ProviderErrorCategory.RATE_LIMITED
+                if status == 429
+                else ProviderErrorCategory.PROVIDER_UNAVAILABLE
+            )
+            raise ProviderError(category) from exc
+        except ValidationError as exc:
+            raise ProviderError(ProviderErrorCategory.SCHEMA_VALIDATION_FAILED) from exc
+        except (httpx.HTTPError, KeyError, TypeError, ValueError) as exc:
+            raise ProviderError(ProviderErrorCategory.INVALID_RESPONSE) from exc

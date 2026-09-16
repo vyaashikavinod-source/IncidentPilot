@@ -6,7 +6,12 @@ import pytest
 from pydantic import ValidationError
 
 from incidentpilot.agent.engine import InvestigationEngine, InvestigationError
-from incidentpilot.agent.provider import FakeProvider, ProviderDecision
+from incidentpilot.agent.provider import (
+    FakeProvider,
+    ProviderDecision,
+    ProviderError,
+    ProviderErrorCategory,
+)
 from incidentpilot.agent.tools import EvidenceTools
 from incidentpilot.evaluation.reporting import comparison_report
 from incidentpilot.incidents.models import EvidenceAction, Incident
@@ -80,3 +85,34 @@ def test_provider_call_budget_terminates_without_diagnosis() -> None:
 def test_absent_manual_baseline_is_reported_without_fabrication() -> None:
     report = comparison_report([], [])
     assert report["manual_baseline_status"] == "MANUAL BASELINE PENDING — NO RECORDED HUMAN RUNS"
+
+
+class FlakyProvider:
+    name = "test"
+    model = "test"
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    def decide(self, system_policy: str, investigation_data: str) -> ProviderDecision:
+        self.calls += 1
+        raise ProviderError(ProviderErrorCategory.TIMEOUT)
+
+
+def test_transient_provider_errors_retry_with_hard_bound() -> None:
+    incident = Incident(source="test", title="t", description="d", severity="low")
+    provider = FlakyProvider()
+    engine = InvestigationEngine(
+        provider,
+        cast("EvidenceTools", object()),
+        max_turns=1,
+        max_tool_calls=1,
+        max_seconds=10,
+        max_evidence_bytes=1000,
+        provider_retry_limit=1,
+    )
+    with pytest.raises(InvestigationError, match="timeout"):
+        engine.run(incident)
+    assert provider.calls == 2
+    assert incident.provider_retry_count == 1
+    assert incident.provider_error_category == "timeout"
