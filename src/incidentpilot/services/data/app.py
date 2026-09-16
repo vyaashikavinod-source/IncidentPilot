@@ -13,6 +13,7 @@ from sqlalchemy import create_engine, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
+from incidentpilot.evaluation.persistence import EvaluationRun, ManualBenchmarkRun
 from incidentpilot.incidents.approval import proposal_hash
 from incidentpilot.incidents.audit import (
     AuditAppend,
@@ -37,9 +38,11 @@ from incidentpilot.services.data.models import (
     AuditCheckpointRow,
     AuditRecordRow,
     DeploymentRecord,
+    EvaluationRunRow,
     IncidentMemoryRow,
     IncidentRecord,
     JobRecord,
+    ManualBenchmarkRow,
 )
 from incidentpilot.shared.config import DataSettings
 from incidentpilot.shared.evidence import Deployment
@@ -566,5 +569,50 @@ def create_app(settings: DataSettings | None = None) -> FastAPI:
                 for row in session.scalars(select(IncidentMemoryRow)).all()
             ]
         return rank_memory(items, query)
+
+    @app.post("/v1/manual-benchmarks", status_code=201, dependencies=[Depends(incident_internal)])
+    def create_manual_run(body: ManualBenchmarkRun) -> ManualBenchmarkRun:
+        with sessions.begin() as session:
+            session.add(
+                ManualBenchmarkRow(id=body.manual_run_id, document=body.model_dump(mode="json"))
+            )
+        return body
+
+    @app.get("/v1/manual-benchmarks/{run_id}", dependencies=[Depends(incident_internal)])
+    def get_manual_run(run_id: UUID) -> ManualBenchmarkRun:
+        with sessions() as session:
+            row = session.get(ManualBenchmarkRow, run_id)
+            if row is None:
+                raise HTTPException(404, "manual_run_not_found")
+            return ManualBenchmarkRun.model_validate(row.document)
+
+    @app.put("/v1/manual-benchmarks/{run_id}", dependencies=[Depends(incident_internal)])
+    def finalize_manual_run(run_id: UUID, body: ManualBenchmarkRun) -> ManualBenchmarkRun:
+        if run_id != body.manual_run_id or not body.finalized:
+            raise HTTPException(422, "manual_run_identity_or_finalization_invalid")
+        with sessions.begin() as session:
+            row = session.get(ManualBenchmarkRow, run_id, with_for_update=True)
+            if row is None:
+                raise HTTPException(404, "manual_run_not_found")
+            if row.finalized:
+                raise HTTPException(409, "manual_run_already_finalized")
+            row.document, row.finalized = body.model_dump(mode="json"), True
+        return body
+
+    @app.post("/v1/evaluation-runs", status_code=201, dependencies=[Depends(incident_internal)])
+    def create_evaluation_run(body: EvaluationRun) -> EvaluationRun:
+        with sessions.begin() as session:
+            session.add(
+                EvaluationRunRow(id=body.evaluation_run_id, document=body.model_dump(mode="json"))
+            )
+        return body
+
+    @app.get("/v1/evaluation-runs/{run_id}", dependencies=[Depends(incident_internal)])
+    def get_evaluation_run(run_id: UUID) -> EvaluationRun:
+        with sessions() as session:
+            row = session.get(EvaluationRunRow, run_id)
+            if row is None:
+                raise HTTPException(404, "evaluation_run_not_found")
+            return EvaluationRun.model_validate(row.document)
 
     return app
