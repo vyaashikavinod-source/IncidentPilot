@@ -165,12 +165,21 @@ def create_app(
         identity: Annotated[OperatorIdentity, Depends(operator)],
         limit: int = 25,
         offset: int = 0,
+        status: IncidentStatus | None = None,
+        severity: Literal["low", "medium", "high", "critical"] | None = None,
+        affected_service: str | None = None,
     ) -> IncidentList:
         authorize(identity, Role.VIEWER)
         if not 1 <= limit <= 100 or offset < 0:
             raise HTTPException(422, "incident_list_pagination_invalid")
         try:
-            return incident_store.list_incidents(limit=limit, offset=offset)
+            return incident_store.list_incidents(
+                limit=limit,
+                offset=offset,
+                status=status,
+                severity=severity,
+                affected_service=affected_service,
+            )
         except IncidentStoreError as exc:
             raise HTTPException(exc.status or 503, "incident listing unavailable") from exc
 

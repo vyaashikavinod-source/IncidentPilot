@@ -57,9 +57,25 @@ class IncidentStore:
             self.http.get(f"/v1/incidents/{incident_id}", headers=self.headers), Incident
         )
 
-    def list_incidents(self, *, limit: int, offset: int) -> IncidentList:
+    def list_incidents(
+        self,
+        *,
+        limit: int,
+        offset: int,
+        status: str | None = None,
+        severity: str | None = None,
+        affected_service: str | None = None,
+    ) -> IncidentList:
         response = self.http.get(
-            "/v1/incidents", headers=self.headers, params={"limit": limit, "offset": offset}
+            "/v1/incidents",
+            headers=self.headers,
+            params={
+                "limit": limit,
+                "offset": offset,
+                "status": status,
+                "severity": severity,
+                "affected_service": affected_service,
+            },
         )
         try:
             response.raise_for_status()

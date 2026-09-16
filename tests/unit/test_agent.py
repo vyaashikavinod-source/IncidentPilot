@@ -35,8 +35,8 @@ from incidentpilot.incidents.models import (
     Incident,
     IncidentCreate,
     IncidentList,
-    IncidentSummary,
     IncidentStatus,
+    IncidentSummary,
     ProposalStatus,
     RemediationProposal,
 )
