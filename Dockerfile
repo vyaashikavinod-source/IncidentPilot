@@ -12,8 +12,11 @@ RUN groupadd --gid 10001 app && useradd --uid 10001 --gid app --no-create-home a
 WORKDIR /app
 COPY --from=builder /opt/venv /opt/venv
 COPY src ./src
-# Operator-only chaos/evaluation code is deliberately absent from service images.
-RUN rm -rf ./src/incidentpilot/chaos ./src/incidentpilot/evaluation
+# Chaos and evaluator/scoring code are deliberately absent from service images.  Data retains only
+# the typed persistence schema; it contains no ground truth, provider, or execution capability.
+RUN rm -rf ./src/incidentpilot/chaos \
+    && find ./src/incidentpilot/evaluation -type f ! -name '__init__.py' ! -name 'persistence.py' -delete \
+    && find ./src/incidentpilot/evaluation -type d -name '__pycache__' -prune -exec rm -rf {} +
 COPY alembic.ini ./
 COPY migrations ./migrations
 USER 10001:10001

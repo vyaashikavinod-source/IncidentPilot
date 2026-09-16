@@ -44,3 +44,6 @@ once before separate evaluator code may persist a score.
 Reports are calculated deterministically from completed stored results. They retain unavailable
 token or cost values as unavailable rather than converting them to zero; they also include failed
 scenarios in every aggregate and breakdown.
+
+Service images retain only the typed evaluation persistence schema required by Data. They exclude
+the evaluator, scoring code, private ground truth, operator CLI, and chaos package.
