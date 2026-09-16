@@ -16,6 +16,9 @@ class ManualBenchmarkRun(BaseModel):
     failure_class: str | None = Field(default=None, max_length=100)
     evidence_references: tuple[str, ...] = ()
     finalized: bool = False
+    score: dict[str, bool] | None = None
+    scorer_version: str | None = Field(default=None, max_length=100)
+    scored_at: datetime | None = None
 
     @model_validator(mode="after")
     def finalized_complete(self) -> "ManualBenchmarkRun":

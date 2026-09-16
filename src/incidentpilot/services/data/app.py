@@ -622,6 +622,42 @@ def create_app(settings: DataSettings | None = None) -> FastAPI:
             row.document = updated.model_dump(mode="json")
             return updated
 
+    @app.post(
+        "/v1/manual-benchmarks/{run_id}/score",
+        dependencies=[Depends(incident_internal)],
+    )
+    def record_manual_score(
+        run_id: UUID, score: dict[str, bool], scorer_version: str
+    ) -> ManualBenchmarkRun:
+        required = {
+            "root_cause_correct",
+            "affected_service_correct",
+            "failure_class_correct",
+            "passed",
+        }
+        if set(score) != required or not all(isinstance(value, bool) for value in score.values()):
+            raise HTTPException(422, "manual_score_invalid")
+        with sessions.begin() as session:
+            row = session.get(ManualBenchmarkRow, run_id, with_for_update=True)
+            if row is None:
+                raise HTTPException(404, "manual_run_not_found")
+            run = ManualBenchmarkRun.model_validate(row.document)
+            if not row.finalized:
+                raise HTTPException(409, "manual_run_not_finalized")
+            if run.score is not None:
+                if run.score == score and run.scorer_version == scorer_version:
+                    return run
+                raise HTTPException(409, "manual_run_already_scored")
+            updated = run.model_copy(
+                update={
+                    "score": score,
+                    "scorer_version": scorer_version,
+                    "scored_at": datetime.now(UTC),
+                }
+            )
+            row.document = updated.model_dump(mode="json")
+            return updated
+
     @app.post("/v1/evaluation-runs", status_code=201, dependencies=[Depends(incident_internal)])
     def create_evaluation_run(body: EvaluationRun) -> EvaluationRun:
         with sessions.begin() as session:
