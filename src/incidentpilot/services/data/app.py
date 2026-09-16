@@ -33,7 +33,9 @@ from incidentpilot.incidents.models import (
     ApprovalDecisionCommand,
     ApprovalRecord,
     Incident,
+    IncidentList,
     IncidentStatus,
+    IncidentSummary,
     ProposalStatus,
 )
 from incidentpilot.memory.models import IncidentMemory, MemoryQuery, MemorySearchResult
@@ -234,6 +236,49 @@ def create_app(settings: DataSettings | None = None) -> FastAPI:
     def get_incident(incident_id: UUID) -> Incident:
         with sessions() as session:
             return Incident.model_validate(find_incident(session, incident_id).document)
+
+    @app.get("/v1/incidents", dependencies=[Depends(incident_internal)])
+    def list_incidents(
+        limit: int = Query(default=25, ge=1, le=100),
+        offset: int = Query(default=0, ge=0, le=10_000),
+        status: IncidentStatus | None = None,
+        severity: Literal["low", "medium", "high", "critical"] | None = None,
+        affected_service: str | None = Query(default=None, max_length=63),
+    ) -> IncidentList:
+        with sessions() as session:
+            rows = session.scalars(
+                select(IncidentRecord)
+                .order_by(IncidentRecord.created_at.desc(), IncidentRecord.id.desc())
+                .offset(offset)
+                .limit(limit + 1)
+            ).all()
+        items = [(Incident.model_validate(row.document), row.updated_at) for row in rows]
+        items = [
+            item
+            for item in items
+            if (status is None or item[0].status == status)
+            and (severity is None or item[0].severity == severity)
+            and (affected_service is None or item[0].affected_service_hint == affected_service)
+        ]
+        page = items[:limit]
+        return IncidentList(
+            items=[
+                IncidentSummary(
+                    incident_id=item[0].incident_id,
+                    title=item[0].title,
+                    source=item[0].source,
+                    severity=item[0].severity,
+                    status=item[0].status,
+                    affected_service=item[0].affected_service_hint,
+                    created_at=item[0].created_at,
+                    updated_at=item[1],
+                )
+                for item in page
+            ],
+            limit=limit,
+            offset=offset,
+            next_offset=offset + limit if len(items) > limit else None,
+        )
 
     @app.put("/v1/incidents/{incident_id}", dependencies=[Depends(incident_internal)])
     def update_incident(incident_id: UUID, body: Incident) -> Incident:

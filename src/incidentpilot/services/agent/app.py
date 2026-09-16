@@ -20,6 +20,7 @@ from incidentpilot.incidents.models import (
     DecisionRequest,
     Incident,
     IncidentCreate,
+    IncidentList,
     IncidentStatus,
     RemediationProposal,
 )
@@ -158,6 +159,20 @@ def create_app(
     ) -> Incident:
         authorize(identity, Role.VIEWER, incident_id)
         return incident_store.get(incident_id)
+
+    @app.get("/v1/incidents")
+    def list_incidents(
+        identity: Annotated[OperatorIdentity, Depends(operator)],
+        limit: int = 25,
+        offset: int = 0,
+    ) -> IncidentList:
+        authorize(identity, Role.VIEWER)
+        if not 1 <= limit <= 100 or offset < 0:
+            raise HTTPException(422, "incident_list_pagination_invalid")
+        try:
+            return incident_store.list_incidents(limit=limit, offset=offset)
+        except IncidentStoreError as exc:
+            raise HTTPException(exc.status or 503, "incident listing unavailable") from exc
 
     @app.post("/v1/incidents/{incident_id}/investigate")
     def investigate(

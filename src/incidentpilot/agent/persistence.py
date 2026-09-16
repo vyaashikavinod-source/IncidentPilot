@@ -9,7 +9,7 @@ from incidentpilot.incidents.audit import (
     AuditRecord,
     ChainVerification,
 )
-from incidentpilot.incidents.models import ApprovalDecisionCommand, Incident
+from incidentpilot.incidents.models import ApprovalDecisionCommand, Incident, IncidentList
 from incidentpilot.memory.models import IncidentMemory, MemoryQuery, MemorySearchResult
 
 
@@ -56,6 +56,16 @@ class IncidentStore:
         return self._decode(
             self.http.get(f"/v1/incidents/{incident_id}", headers=self.headers), Incident
         )
+
+    def list_incidents(self, *, limit: int, offset: int) -> IncidentList:
+        response = self.http.get(
+            "/v1/incidents", headers=self.headers, params={"limit": limit, "offset": offset}
+        )
+        try:
+            response.raise_for_status()
+            return IncidentList.model_validate(response.json())
+        except (httpx.HTTPError, ValidationError, ValueError) as exc:
+            raise IncidentStoreError("incident listing failed") from exc
 
     def update(self, incident: Incident) -> Incident:
         return self._decode(

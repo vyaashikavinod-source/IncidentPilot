@@ -34,6 +34,8 @@ from incidentpilot.incidents.models import (
     EvidenceAction,
     Incident,
     IncidentCreate,
+    IncidentList,
+    IncidentSummary,
     IncidentStatus,
     ProposalStatus,
     RemediationProposal,
@@ -358,6 +360,27 @@ class MemoryStore:
     def get(self, incident_id: UUID) -> Incident:
         return self.items[incident_id].model_copy(deep=True)
 
+    def list_incidents(self, *, limit: int, offset: int) -> IncidentList:
+        items = sorted(self.items.values(), key=lambda item: item.created_at, reverse=True)
+        page = items[offset : offset + limit]
+        return IncidentList(
+            items=[
+                IncidentSummary(
+                    incident_id=item.incident_id,
+                    title=item.title,
+                    source=item.source,
+                    severity=item.severity,
+                    status=item.status,
+                    affected_service=item.affected_service_hint,
+                    created_at=item.created_at,
+                    updated_at=item.created_at,
+                )
+                for item in page
+            ],
+            limit=limit,
+            offset=offset,
+        )
+
     def update(self, value: Incident) -> Incident:
         self.items[value.incident_id] = value.model_copy(deep=True)
         return value
@@ -492,6 +515,11 @@ def test_incident_api_has_approval_but_no_execution_route() -> None:
         )
         assert created.status_code == 201
         incident_id = created.json()["incident_id"]
+        assert client.get("/v1/incidents").status_code == 401
+        listed = client.get("/v1/incidents", headers=headers(Role.VIEWER))
+        assert listed.status_code == 200
+        assert listed.json()["items"][0]["incident_id"] == incident_id
+        assert "description" not in listed.json()["items"][0]
         assert (
             client.post(
                 f"/v1/incidents/{incident_id}/investigate", headers=headers(Role.VIEWER)

@@ -41,6 +41,24 @@ class IncidentCreate(StrictModel):
         return value
 
 
+class IncidentSummary(StrictModel):
+    incident_id: UUID
+    title: str
+    source: str
+    severity: Literal["low", "medium", "high", "critical"]
+    status: IncidentStatus
+    affected_service: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class IncidentList(StrictModel):
+    items: list[IncidentSummary]
+    limit: int
+    offset: int
+    next_offset: int | None = None
+
+
 class EvidenceAction(StrictModel):
     tool: Literal[
         "get_service_status",
