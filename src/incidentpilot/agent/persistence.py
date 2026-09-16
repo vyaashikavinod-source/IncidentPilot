@@ -10,6 +10,7 @@ from incidentpilot.incidents.audit import (
     ChainVerification,
 )
 from incidentpilot.incidents.models import ApprovalDecisionCommand, Incident
+from incidentpilot.memory.models import IncidentMemory, MemoryQuery, MemorySearchResult
 
 
 class IncidentStoreError(RuntimeError):
@@ -145,3 +146,23 @@ class IncidentStore:
             return bool(response.json()["valid"])
         except (httpx.HTTPError, KeyError, ValueError, TypeError) as exc:
             raise IncidentStoreError("audit checkpoint verification failed") from exc
+
+    def create_memory(self, incident_id: UUID) -> IncidentMemory:
+        response = self.http.post(f"/v1/incidents/{incident_id}/memory", headers=self.headers)
+        try:
+            response.raise_for_status()
+            return IncidentMemory.model_validate(response.json())
+        except (httpx.HTTPError, ValidationError, ValueError) as exc:
+            raise IncidentStoreError("memory persistence failed") from exc
+
+    def search_memory(self, query: MemoryQuery) -> list[MemorySearchResult]:
+        response = self.http.get(
+            "/v1/memory",
+            headers=self.headers,
+            params=query.model_dump(exclude={"tags"}, exclude_none=True),
+        )
+        try:
+            response.raise_for_status()
+            return [MemorySearchResult.model_validate(item) for item in response.json()]
+        except (httpx.HTTPError, ValidationError, ValueError, TypeError) as exc:
+            raise IncidentStoreError("memory retrieval failed") from exc

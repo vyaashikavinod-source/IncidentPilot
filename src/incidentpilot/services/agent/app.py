@@ -23,6 +23,7 @@ from incidentpilot.incidents.models import (
     IncidentStatus,
     RemediationProposal,
 )
+from incidentpilot.memory.models import MemoryQuery, MemorySearchResult
 from incidentpilot.security.auth import OperatorAuthenticator, OperatorIdentity, Role, require_role
 from incidentpilot.security.rate_limit import LocalRateLimiter, RateLimitExceeded
 from incidentpilot.shared.config import AgentSettings
@@ -195,6 +196,20 @@ def create_app(
             {"attempt": incident.investigation_attempts},
         )
         incident.audit_references.append(start_audit.audit_id)
+        try:
+            memories = incident_store.search_memory(
+                MemoryQuery(affected_service=incident.affected_service_hint, limit=5)
+            )
+        except (IncidentStoreError, AttributeError):
+            memories = []
+        incident.historical_memory = {
+            str(item.memory.memory_id): item.memory.model_dump(mode="json") for item in memories
+        }
+        security_metrics.memory_lookups.labels("hit" if memories else "miss").inc()
+        memory_audit = incident_store.audit(
+            incident_id, "memory_lookup", "incident-agent", {"result_count": len(memories)}
+        )
+        incident.audit_references.append(memory_audit.audit_id)
         engine = InvestigationEngine(
             configured_provider,
             evidence_tools,
@@ -202,6 +217,9 @@ def create_app(
             max_tool_calls=config.investigation_max_tool_calls,
             max_seconds=config.investigation_max_seconds,
             max_evidence_bytes=config.investigation_max_evidence_bytes,
+            max_provider_calls=config.investigation_max_provider_calls,
+            max_input_tokens=config.investigation_max_input_tokens,
+            max_total_tokens=config.investigation_max_total_tokens,
         )
         started = time.monotonic()
         security_metrics.investigations.labels("started").inc()
@@ -213,10 +231,13 @@ def create_app(
             incident.investigation_completed_at = datetime.now(UTC)
             incident.last_failure_at = incident.investigation_completed_at
             incident.investigation_error = reason
+            incident.budget_termination_reason = reason if "budget" in reason else None
             incident.investigation_lease_expires_at = None
             security_metrics.investigations.labels("failed").inc()
             security_metrics.llm_requests.labels("failed").inc()
             event = "investigation_limit" if "limit" in reason else "invalid_provider_output"
+            if "budget" in reason:
+                security_metrics.budget_terminations.labels(reason.replace(" ", "_")).inc()
             security_metrics.security_events.labels(event).inc()
             failed = incident_store.audit(
                 incident_id, "investigation_failed", "incident-agent", {"reason": reason}
@@ -228,6 +249,18 @@ def create_app(
             security_metrics.duration.observe(time.monotonic() - started)
         incident.investigation_lease_expires_at = None
         _audit_completed_investigation(incident)
+        incident = incident_store.update(incident)
+        try:
+            memory = incident_store.create_memory(incident.incident_id)
+            created_memory = incident_store.audit(
+                incident_id,
+                "memory_created",
+                "incident-agent",
+                {"memory_id": str(memory.memory_id)},
+            )
+            incident.audit_references.append(created_memory.audit_id)
+        except (IncidentStoreError, AttributeError):
+            pass
         return incident_store.update(incident)
 
     def _audit_completed_investigation(incident: Incident) -> None:
@@ -291,6 +324,17 @@ def create_app(
     ) -> list[RemediationProposal]:
         authorize(identity, Role.VIEWER, incident_id)
         return incident_store.get(incident_id).remediation_proposals
+
+    @app.get("/v1/memory")
+    def memory_search(
+        identity: Annotated[OperatorIdentity, Depends(operator)],
+        affected_service: str | None = None,
+        failure_class: str | None = None,
+    ) -> list[MemorySearchResult]:
+        authorize(identity, Role.VIEWER)
+        return incident_store.search_memory(
+            MemoryQuery(affected_service=affected_service, failure_class=failure_class)
+        )
 
     def decide(
         incident_id: UUID,

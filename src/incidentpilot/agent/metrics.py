@@ -41,3 +41,15 @@ class AgentMetrics:
             ["event"],
             registry=registry,
         )
+        self.memory_lookups = Counter(
+            "incidentpilot_agent_memory_lookups_total",
+            "Bounded memory lookups",
+            ["outcome"],
+            registry=registry,
+        )
+        self.budget_terminations = Counter(
+            "incidentpilot_agent_budget_terminations_total",
+            "Investigation budgets reached",
+            ["reason"],
+            registry=registry,
+        )

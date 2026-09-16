@@ -31,10 +31,13 @@ from incidentpilot.incidents.models import (
     IncidentStatus,
     ProposalStatus,
 )
+from incidentpilot.memory.models import IncidentMemory, MemoryQuery, MemorySearchResult
+from incidentpilot.memory.ranking import rank_memory
 from incidentpilot.services.data.models import (
     AuditCheckpointRow,
     AuditRecordRow,
     DeploymentRecord,
+    IncidentMemoryRow,
     IncidentRecord,
     JobRecord,
 )
@@ -490,5 +493,78 @@ def create_app(settings: DataSettings | None = None) -> FastAPI:
                 checkpoint, records, config.audit_signing_secret.get_secret_value()
             )
         }
+
+    def build_memory(incident: Incident) -> IncidentMemory:
+        if (
+            incident.status
+            not in {IncidentStatus.PROPOSAL_READY, IncidentStatus.APPROVED, IncidentStatus.CLOSED}
+            or incident.diagnosis is None
+            or not incident.diagnosis.supporting_evidence_ids
+            or not incident.remediation_proposals
+        ):
+            raise HTTPException(409, "incident_is_not_memory_eligible")
+        categories = tuple(
+            sorted(
+                {
+                    str(value.get("provenance", {}).get("source_type", "unknown"))
+                    for value in incident.evidence.values()
+                    if isinstance(value, dict)
+                }
+            )
+        )
+        if not categories:
+            raise HTTPException(409, "incident_has_no_memory_evidence")
+        proposal = incident.remediation_proposals[0]
+        return IncidentMemory(
+            incident_id=incident.incident_id,
+            affected_service=incident.diagnosis.affected_service,
+            failure_class=incident.diagnosis.failure_class,
+            root_cause_summary=incident.diagnosis.concise_explanation,
+            investigation_summary=incident.diagnosis.investigation_summary,
+            remediation_proposal_summary=proposal.description,
+            evidence_categories=categories,
+            confidence=incident.diagnosis.confidence,
+            tags=(incident.severity, incident.source),
+        )
+
+    @app.post(
+        "/v1/incidents/{incident_id}/memory",
+        status_code=201,
+        dependencies=[Depends(incident_internal)],
+    )
+    def create_memory(incident_id: UUID) -> IncidentMemory:
+        with sessions.begin() as session:
+            incident = Incident.model_validate(
+                find_incident(session, incident_id, lock=True).document
+            )
+            memory = build_memory(incident)
+            if session.scalar(
+                select(IncidentMemoryRow).where(IncidentMemoryRow.incident_id == incident_id)
+            ):
+                raise HTTPException(409, "incident_memory_already_exists")
+            session.add(
+                IncidentMemoryRow(
+                    id=memory.memory_id,
+                    incident_id=incident_id,
+                    document=memory.model_dump(mode="json"),
+                )
+            )
+            return memory
+
+    @app.get("/v1/memory", dependencies=[Depends(incident_internal)])
+    def search_memory(
+        affected_service: str | None = Query(default=None, max_length=63),
+        failure_class: str | None = Query(default=None, max_length=100),
+        limit: int = Query(default=5, ge=1, le=10),
+    ) -> list[MemorySearchResult]:
+        query = MemoryQuery(
+            affected_service=affected_service, failure_class=failure_class, limit=limit
+        )
+        with sessions() as session:
+            items = [
+                IncidentMemory.model_validate(row.document)
+                for row in session.scalars(select(IncidentMemoryRow)).all()
+            ]
+        return rank_memory(items, query)
 
     return app

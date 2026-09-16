@@ -141,6 +141,11 @@ class AgentSettings(HTTPSettings):
     llm_api_key: SecretStr | None = None
     llm_timeout: float = Field(default=20, gt=0, le=60)
     llm_max_output_tokens: int = Field(default=1200, ge=100, le=4000)
+    investigation_max_provider_calls: int = Field(default=6, ge=1, le=12)
+    investigation_max_input_tokens: int = Field(default=12_000, ge=100, le=100_000)
+    investigation_max_total_tokens: int = Field(default=16_000, ge=100, le=100_000)
+    investigation_max_cost_usd: float | None = Field(default=None, gt=0, le=100)
+    investigation_context_bytes: int = Field(default=120_000, ge=10_000, le=500_000)
     investigation_max_turns: int = Field(default=6, ge=1, le=12)
     investigation_max_tool_calls: int = Field(default=8, ge=1, le=20)
     investigation_max_seconds: int = Field(default=90, ge=10, le=300)

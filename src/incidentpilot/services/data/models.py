@@ -116,3 +116,14 @@ class AuditCheckpointRow(Base):
     last_record_hash: Mapped[str] = mapped_column(String(64))
     checkpoint_timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     signature: Mapped[str] = mapped_column(String(64), unique=True)
+
+
+class IncidentMemoryRow(Base):
+    __tablename__ = "incident_memory"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    incident_id: Mapped[UUID] = mapped_column(
+        ForeignKey("incidents.id", ondelete="RESTRICT"), unique=True, index=True
+    )
+    document: Mapped[dict[str, object]] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

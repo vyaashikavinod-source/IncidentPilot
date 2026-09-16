@@ -3,6 +3,9 @@
 Phase 4 security architecture and trust assumptions are documented in
 [docs/security-hardening.md](docs/security-hardening.md).
 
+Phase 5 memory and evaluation controls are documented in
+[docs/phase5-memory-evaluation.md](docs/phase5-memory-evaluation.md).
+
 Phase 3 adds a bounded evidence-driven investigation service. It produces structured diagnoses and
 proposal-only remediation recommendations, then stops. See
 [agent investigation](docs/agent-investigation.md). It cannot execute remediation.

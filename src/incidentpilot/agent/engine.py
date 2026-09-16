@@ -2,6 +2,7 @@ import json
 import time
 from datetime import UTC, datetime
 from typing import Any
+from uuid import UUID
 
 from incidentpilot.agent.prompts import SYSTEM_POLICY, investigation_prompt
 from incidentpilot.agent.provider import LLMProvider, ProviderError, RemediationDraft
@@ -12,6 +13,7 @@ from incidentpilot.incidents.models import (
     Incident,
     IncidentStatus,
     InvestigationStep,
+    Reflection,
     RemediationProposal,
 )
 
@@ -30,10 +32,15 @@ class InvestigationEngine:
         max_tool_calls: int,
         max_seconds: int,
         max_evidence_bytes: int,
+        max_provider_calls: int | None = None,
+        max_input_tokens: int | None = None,
+        max_total_tokens: int | None = None,
     ) -> None:
         self.provider, self.tools = provider, tools
         self.max_turns, self.max_tool_calls = max_turns, max_tool_calls
         self.max_seconds, self.max_evidence_bytes = max_seconds, max_evidence_bytes
+        self.max_provider_calls = max_provider_calls or max_turns
+        self.max_input_tokens, self.max_total_tokens = max_input_tokens, max_total_tokens
 
     def run(self, incident: Incident) -> Incident:
         started = time.monotonic()
@@ -43,15 +50,27 @@ class InvestigationEngine:
         for turn in range(1, self.max_turns + 1):
             if time.monotonic() - started > self.max_seconds:
                 raise InvestigationError("investigation wall-clock limit reached")
+            if incident.provider_request_count >= self.max_provider_calls:
+                raise InvestigationError("provider-call budget reached")
             try:
                 decision = self.provider.decide(SYSTEM_POLICY, investigation_prompt(incident))
             except ProviderError as exc:
                 raise InvestigationError("provider failure") from exc
             incident.investigation_turns = turn
+            incident.provider_request_count += 1
             if decision.input_tokens is not None:
                 incident.input_tokens = (incident.input_tokens or 0) + decision.input_tokens
             if decision.output_tokens is not None:
                 incident.output_tokens = (incident.output_tokens or 0) + decision.output_tokens
+            if (
+                self.max_input_tokens is not None
+                and (incident.input_tokens or 0) > self.max_input_tokens
+            ):
+                raise InvestigationError("input-token budget reached")
+            if self.max_total_tokens is not None and (
+                (incident.input_tokens or 0) + (incident.output_tokens or 0) > self.max_total_tokens
+            ):
+                raise InvestigationError("total-token budget reached")
             if incident.investigation_steps:
                 previous = incident.investigation_steps[-1]
                 previous.current_hypothesis = decision.hypothesis
@@ -67,6 +86,15 @@ class InvestigationEngine:
                 if not cited.issubset(known) or not decision.diagnosis.supporting_evidence_ids:
                     raise InvestigationError("diagnosis contains unsupported evidence references")
                 incident.diagnosis = decision.diagnosis
+                incident.reflection = Reflection(
+                    leading_hypothesis=decision.hypothesis,
+                    current_evidence_ids=decision.diagnosis.supporting_evidence_ids,
+                    contradicting_evidence_ids=decision.diagnosis.contradicting_evidence_ids,
+                    historical_memory_ids=tuple(
+                        UUID(value) for value in incident.historical_memory
+                    ),
+                    additional_evidence_warranted=False,
+                )
                 incident.status = IncidentStatus.DIAGNOSED
                 incident.investigation_completed_at = datetime.now(UTC)
                 incident.remediation_proposals = [self._proposal(incident, decision.remediation)]

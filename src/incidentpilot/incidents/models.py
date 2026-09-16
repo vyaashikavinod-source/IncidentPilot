@@ -58,6 +58,15 @@ class EvidenceAction(StrictModel):
     limit: int = Field(default=50, ge=1, le=100)
 
 
+class Reflection(StrictModel):
+    leading_hypothesis: str = Field(min_length=1, max_length=1000)
+    current_evidence_ids: tuple[UUID, ...]
+    contradicting_evidence_ids: tuple[UUID, ...] = ()
+    historical_memory_ids: tuple[UUID, ...] = ()
+    alternative_untested: str | None = Field(default=None, max_length=500)
+    additional_evidence_warranted: bool
+
+
 class HypothesisDisposition(StrEnum):
     SUPPORTED = "supported"
     WEAKENED = "weakened"
@@ -160,6 +169,11 @@ class Incident(StrictModel):
     last_failure_at: datetime | None = None
     investigation_attempts: int = Field(default=0, ge=0)
     investigation_lease_expires_at: datetime | None = None
+    historical_memory: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    reflection: Reflection | None = None
+    provider_request_count: int = Field(default=0, ge=0)
+    estimated_cost_usd: float | None = Field(default=None, ge=0)
+    budget_termination_reason: str | None = Field(default=None, max_length=200)
 
     @field_validator("alert_metadata")
     @classmethod
