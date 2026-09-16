@@ -85,7 +85,11 @@ def test_operator_chaos_and_private_truth_are_absent_from_service_images() -> No
     dockerfile = (root / "Dockerfile").read_text()
     dockerignore = (root / ".dockerignore").read_text()
     compose = cast(dict[str, Any], yaml.safe_load((root / "docker-compose.yml").read_text()))
-    assert "rm -rf ./src/incidentpilot/chaos ./src/incidentpilot/evaluation" in dockerfile
+    assert "rm -rf ./src/incidentpilot/chaos" in dockerfile
+    assert (
+        "find ./src/incidentpilot/evaluation -type f ! -name '__init__.py' "
+        "! -name 'persistence.py' -delete"
+    ) in dockerfile
     assert "!chaos" not in dockerignore
     for service in cast(dict[str, dict[str, Any]], compose["services"]).values():
         assert "/var/run/docker.sock" not in str(service.get("volumes", []))
