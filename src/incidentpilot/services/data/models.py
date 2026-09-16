@@ -127,3 +127,18 @@ class IncidentMemoryRow(Base):
     )
     document: Mapped[dict[str, object]] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ManualBenchmarkRow(Base):
+    __tablename__ = "manual_benchmark_runs"
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    document: Mapped[dict[str, object]] = mapped_column(JSONB)
+    finalized: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class EvaluationRunRow(Base):
+    __tablename__ = "evaluation_runs"
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    document: Mapped[dict[str, object]] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

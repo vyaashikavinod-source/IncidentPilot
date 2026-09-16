@@ -13,6 +13,7 @@ from incidentpilot.agent.provider import (
     ProviderErrorCategory,
 )
 from incidentpilot.agent.tools import EvidenceTools
+from incidentpilot.evaluation.persistence import ManualBenchmarkRun
 from incidentpilot.evaluation.reporting import comparison_report
 from incidentpilot.incidents.models import EvidenceAction, Incident
 from incidentpilot.memory.models import IncidentMemory, MemoryQuery
@@ -85,6 +86,11 @@ def test_provider_call_budget_terminates_without_diagnosis() -> None:
 def test_absent_manual_baseline_is_reported_without_fabrication() -> None:
     report = comparison_report([], [])
     assert report["manual_baseline_status"] == "MANUAL BASELINE PENDING — NO RECORDED HUMAN RUNS"
+
+
+def test_manual_benchmark_finalization_requires_a_submission() -> None:
+    with pytest.raises(ValidationError):
+        ManualBenchmarkRun(participant_pseudonym="operator", finalized=True)
 
 
 class FlakyProvider:
