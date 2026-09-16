@@ -90,6 +90,8 @@ class AuditRecordRow(Base):
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
+    chain_version: Mapped[int] = mapped_column(Integer)
+    canonicalization_version: Mapped[str] = mapped_column(String(64))
     incident_id: Mapped[UUID] = mapped_column(
         ForeignKey("incidents.id", ondelete="RESTRICT"), index=True
     )
@@ -100,3 +102,17 @@ class AuditRecordRow(Base):
     event_metadata: Mapped[dict[str, object]] = mapped_column(JSONB)
     previous_hash: Mapped[str | None] = mapped_column(String(64))
     record_hash: Mapped[str] = mapped_column(String(64), unique=True)
+
+
+class AuditCheckpointRow(Base):
+    __tablename__ = "audit_checkpoints"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    incident_id: Mapped[UUID] = mapped_column(
+        ForeignKey("incidents.id", ondelete="RESTRICT"), index=True
+    )
+    checkpoint_version: Mapped[int] = mapped_column(Integer)
+    last_sequence: Mapped[int] = mapped_column(Integer)
+    last_record_hash: Mapped[str] = mapped_column(String(64))
+    checkpoint_timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    signature: Mapped[str] = mapped_column(String(64), unique=True)

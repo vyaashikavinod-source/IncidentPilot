@@ -3,12 +3,19 @@ from uuid import UUID
 import httpx
 from pydantic import ValidationError
 
-from incidentpilot.incidents.audit import AuditAppend, AuditRecord
-from incidentpilot.incidents.models import Incident
+from incidentpilot.incidents.audit import (
+    AuditAppend,
+    AuditCheckpoint,
+    AuditRecord,
+    ChainVerification,
+)
+from incidentpilot.incidents.models import ApprovalDecisionCommand, Incident
 
 
 class IncidentStoreError(RuntimeError):
-    pass
+    def __init__(self, message: str, status: int | None = None) -> None:
+        super().__init__(message)
+        self.status = status
 
 
 class IncidentStore:
@@ -20,7 +27,7 @@ class IncidentStore:
         transport: httpx.BaseTransport | None = None,
     ):
         self.http = httpx.Client(base_url=data_url, timeout=timeout, transport=transport)
-        self.headers = {"X-Internal-Token": token}
+        self.headers = {"X-Incident-Token": token}
 
     def close(self) -> None:
         self.http.close()
@@ -29,6 +36,10 @@ class IncidentStore:
         try:
             response.raise_for_status()
             return model.model_validate(response.json())
+        except httpx.HTTPStatusError as exc:
+            raise IncidentStoreError(
+                "incident persistence operation failed", exc.response.status_code
+            ) from exc
         except (httpx.HTTPError, ValidationError, ValueError) as exc:
             raise IncidentStoreError("incident persistence operation failed") from exc
 
@@ -54,6 +65,20 @@ class IncidentStore:
             ),
             Incident,
         )
+
+    def claim(self, incident_id: UUID) -> Incident:
+        response = self.http.post(
+            f"/v1/incidents/{incident_id}/claim-investigation", headers=self.headers
+        )
+        return self._decode(response, Incident)
+
+    def decide(self, incident_id: UUID, command: ApprovalDecisionCommand) -> Incident:
+        response = self.http.post(
+            f"/v1/incidents/{incident_id}/decision",
+            headers=self.headers,
+            json=command.model_dump(mode="json"),
+        )
+        return self._decode(response, Incident)
 
     def audit(
         self,
@@ -81,3 +106,42 @@ class IncidentStore:
             return [AuditRecord.model_validate(item) for item in response.json()]
         except (httpx.HTTPError, ValidationError, ValueError, TypeError) as exc:
             raise IncidentStoreError("audit retrieval failed") from exc
+
+    def verify_audit(self, incident_id: UUID) -> ChainVerification:
+        response = self.http.get(f"/v1/incidents/{incident_id}/audit/verify", headers=self.headers)
+        try:
+            response.raise_for_status()
+            return ChainVerification.model_validate(response.json())
+        except (httpx.HTTPError, ValidationError, ValueError) as exc:
+            raise IncidentStoreError("audit verification failed") from exc
+
+    def verify_all_audits(self) -> dict[str, ChainVerification]:
+        response = self.http.get("/v1/audit/verify", headers=self.headers)
+        try:
+            response.raise_for_status()
+            return {
+                key: ChainVerification.model_validate(value)
+                for key, value in response.json().items()
+            }
+        except (httpx.HTTPError, ValidationError, ValueError, TypeError) as exc:
+            raise IncidentStoreError("full audit verification failed") from exc
+
+    def checkpoint(self, incident_id: UUID) -> AuditCheckpoint:
+        response = self.http.post(
+            f"/v1/incidents/{incident_id}/audit/checkpoints", headers=self.headers
+        )
+        try:
+            response.raise_for_status()
+            return AuditCheckpoint.model_validate(response.json())
+        except (httpx.HTTPError, ValidationError, ValueError) as exc:
+            raise IncidentStoreError("audit checkpoint creation failed") from exc
+
+    def verify_checkpoint(self, incident_id: UUID) -> bool:
+        response = self.http.get(
+            f"/v1/incidents/{incident_id}/audit/checkpoints/verify", headers=self.headers
+        )
+        try:
+            response.raise_for_status()
+            return bool(response.json()["valid"])
+        except (httpx.HTTPError, KeyError, ValueError, TypeError) as exc:
+            raise IncidentStoreError("audit checkpoint verification failed") from exc

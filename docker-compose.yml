@@ -59,6 +59,8 @@ services:
       INCIDENTPILOT_SERVICE_NAME: data
       INCIDENTPILOT_DATABASE_URL: postgresql+psycopg://incidentpilot:${INCIDENTPILOT_DB_PASSWORD:?set a local application password}@postgres:5432/incidentpilot
       INCIDENTPILOT_INTERNAL_TOKEN: ${INCIDENTPILOT_INTERNAL_TOKEN:?set a local internal token}
+      INCIDENTPILOT_INCIDENT_TOKEN: ${INCIDENTPILOT_INCIDENT_TOKEN:?set a local incident data token}
+      INCIDENTPILOT_AUDIT_SIGNING_SECRET: ${INCIDENTPILOT_AUDIT_SIGNING_SECRET:?set a local audit signing secret}
     depends_on:
       postgres: {condition: service_healthy}
 
@@ -175,7 +177,8 @@ services:
       INCIDENTPILOT_SERVICE_NAME: agent
       INCIDENTPILOT_DATA_URL: http://data:8000
       INCIDENTPILOT_EVIDENCE_URL: http://control-plane:8000
-      INCIDENTPILOT_INTERNAL_TOKEN: ${INCIDENTPILOT_INTERNAL_TOKEN:?set a local internal token}
+      INCIDENTPILOT_DATA_TOKEN: ${INCIDENTPILOT_INCIDENT_TOKEN:?set a local incident data token}
+      INCIDENTPILOT_OPERATOR_SIGNING_SECRET: ${INCIDENTPILOT_OPERATOR_SIGNING_SECRET:?set a local operator signing secret}
       INCIDENTPILOT_LLM_PROVIDER: ${INCIDENTPILOT_LLM_PROVIDER:-fake}
       INCIDENTPILOT_LLM_MODEL: ${INCIDENTPILOT_LLM_MODEL:-gpt-5-mini}
       INCIDENTPILOT_LLM_API_KEY: ${INCIDENTPILOT_LLM_API_KEY:-}

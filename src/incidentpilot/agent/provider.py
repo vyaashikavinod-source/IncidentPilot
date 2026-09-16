@@ -1,10 +1,29 @@
 from collections.abc import Sequence
-from typing import Protocol
+from typing import Literal, Protocol
 
 import httpx
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from incidentpilot.incidents.models import Diagnosis, EvidenceAction
+
+
+class RemediationDraft(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    proposed_action_type: Literal[
+        "restart_service",
+        "rollback_deployment",
+        "restore_dependency",
+        "scale_worker",
+        "configuration_change",
+        "investigate_manually",
+    ]
+    target_service: str = Field(min_length=1, max_length=63)
+    description: str = Field(min_length=1, max_length=1000)
+    rationale: str = Field(min_length=1, max_length=1000)
+    expected_effect: str = Field(min_length=1, max_length=1000)
+    risk: str = Field(min_length=1, max_length=1000)
+    rollback_plan: str = Field(min_length=1, max_length=1000)
+    verification_plan: str = Field(min_length=1, max_length=1000)
 
 
 class ProviderError(RuntimeError):
@@ -18,7 +37,7 @@ class ProviderDecision(BaseModel):
     disposition: str = Field(pattern="^(supported|weakened|rejected|unresolved)$")
     action: EvidenceAction | None = None
     diagnosis: Diagnosis | None = None
-    remediation: dict[str, str] | None = None
+    remediation: RemediationDraft | None = None
     input_tokens: int | None = Field(default=None, ge=0)
     output_tokens: int | None = Field(default=None, ge=0)
 

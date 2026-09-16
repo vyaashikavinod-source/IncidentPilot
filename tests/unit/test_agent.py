@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import cast
 from uuid import UUID, uuid4
 
@@ -18,15 +18,27 @@ from incidentpilot.agent.provider import (
 )
 from incidentpilot.agent.tools import EvidenceToolError, EvidenceTools
 from incidentpilot.incidents.approval import proposal_hash, require_valid_approval
-from incidentpilot.incidents.audit import AuditRecord, make_record, verify_chain
+from incidentpilot.incidents.audit import (
+    AuditCheckpoint,
+    AuditRecord,
+    ChainVerification,
+    create_checkpoint,
+    make_record,
+    verify_chain,
+    verify_chain_report,
+    verify_checkpoint,
+)
 from incidentpilot.incidents.models import (
     ApprovalRecord,
     Diagnosis,
     EvidenceAction,
     Incident,
     IncidentCreate,
+    IncidentStatus,
+    ProposalStatus,
     RemediationProposal,
 )
+from incidentpilot.security.auth import OperatorIdentity, Role, issue_token
 from incidentpilot.services.agent.app import create_app
 from incidentpilot.shared.config import AgentSettings
 from incidentpilot.shared.evidence import (
@@ -243,9 +255,12 @@ def test_proposal_hash_binds_approval_and_mutation_invalidates_it() -> None:
     proposal.proposal_hash = proposal_hash(proposal)
     approval = ApprovalRecord(
         proposal_id=proposal.proposal_id,
+        incident_id=proposal.incident_id,
+        proposal_version=proposal.version,
         proposal_hash=proposal.proposal_hash,
         approver_identity="operator",
         decision="approved",
+        request_id=uuid4(),
     )
     assert require_valid_approval(proposal, [approval]) == approval
     proposal.description = "Changed recommendation"
@@ -347,6 +362,43 @@ class MemoryStore:
         self.items[value.incident_id] = value.model_copy(deep=True)
         return value
 
+    def claim(self, incident_id: UUID) -> Incident:
+        value = self.get(incident_id)
+        if value.status not in {"open", "investigation_failed"}:
+            from incidentpilot.agent.persistence import IncidentStoreError
+
+            raise IncidentStoreError("conflict", 409)
+        value.status = IncidentStatus.INVESTIGATING
+        value.investigation_attempts += 1
+        return self.update(value)
+
+    def decide(self, incident_id: UUID, command: object) -> Incident:
+        from incidentpilot.incidents.models import ApprovalDecisionCommand
+
+        body = cast("ApprovalDecisionCommand", command)
+        value = self.get(incident_id)
+        proposal = next(p for p in value.remediation_proposals if p.proposal_id == body.proposal_id)
+        proposal.status = (
+            ProposalStatus.APPROVED if body.decision == "approved" else ProposalStatus.REJECTED
+        )
+        value.status = (
+            IncidentStatus.APPROVED
+            if body.decision == "approved"
+            else IncidentStatus.PROPOSAL_READY
+        )
+        value.approvals.append(
+            ApprovalRecord(
+                incident_id=incident_id,
+                proposal_id=body.proposal_id,
+                proposal_version=body.proposal_version,
+                proposal_hash=body.proposal_hash,
+                approver_identity=body.approver_identity,
+                decision=body.decision,
+                request_id=body.request_id,
+            )
+        )
+        return self.update(value)
+
     def audit(
         self,
         incident_id: UUID,
@@ -369,6 +421,19 @@ class MemoryStore:
     def audits(self, incident_id: UUID) -> list[AuditRecord]:
         return self.records[incident_id]
 
+    def verify_audit(self, incident_id: UUID) -> ChainVerification:
+        return verify_chain_report(self.audits(incident_id))
+
+    def verify_all_audits(self) -> dict[str, ChainVerification]:
+        return {str(key): verify_chain_report(value) for key, value in self.records.items()}
+
+    def checkpoint(self, incident_id: UUID) -> AuditCheckpoint:
+        return create_checkpoint(self.audits(incident_id), "c" * 32)
+
+    def verify_checkpoint(self, incident_id: UUID) -> bool:
+        records = self.audits(incident_id)
+        return verify_checkpoint(create_checkpoint(records, "c" * 32), records, "c" * 32)
+
 
 def test_incident_api_has_approval_but_no_execution_route() -> None:
     item = evidence()
@@ -388,17 +453,36 @@ def test_incident_api_has_approval_but_no_execution_route() -> None:
             ),
         ]
     )
-    settings = AgentSettings(internal_token="x" * 16, service_name="agent")
+    signing_secret = "s" * 32
+    settings = AgentSettings(
+        data_token="x" * 16,
+        operator_signing_secret=signing_secret,
+        service_name="agent",
+    )
     store = MemoryStore()
     app = create_app(
         settings, provider=provider, store=cast("IncidentStore", store), tools=StubTools(item)
     )
-    headers = {"X-Internal-Token": "x" * 16}
+
+    def headers(role: Role) -> dict[str, str]:
+        token = issue_token(
+            OperatorIdentity(
+                subject=f"{role.value}@example.test",
+                roles=frozenset({role}),
+                expires_at=datetime.now(UTC) + timedelta(minutes=5),
+                token_id=f"test-{role.value}",
+                issuer=settings.operator_token_issuer,
+                audience=settings.operator_token_audience,
+            ),
+            signing_secret,
+        )
+        return {"Authorization": f"Bearer {token}"}
+
     with TestClient(app) as client:
         assert client.post("/v1/incidents", json={}).status_code == 401
         created = client.post(
             "/v1/incidents",
-            headers=headers,
+            headers=headers(Role.INVESTIGATOR),
             json=IncidentCreate(
                 source="alertmanager",
                 title="failure",
@@ -408,19 +492,40 @@ def test_incident_api_has_approval_but_no_execution_route() -> None:
         )
         assert created.status_code == 201
         incident_id = created.json()["incident_id"]
-        investigated = client.post(f"/v1/incidents/{incident_id}/investigate", headers=headers)
+        assert (
+            client.post(
+                f"/v1/incidents/{incident_id}/investigate", headers=headers(Role.VIEWER)
+            ).status_code
+            == 403
+        )
+        investigated = client.post(
+            f"/v1/incidents/{incident_id}/investigate", headers=headers(Role.INVESTIGATOR)
+        )
         assert investigated.status_code == 200
         proposal_id = investigated.json()["remediation_proposals"][0]["proposal_id"]
+        decision_body = {
+            "proposal_hash": investigated.json()["remediation_proposals"][0]["proposal_hash"],
+            "proposal_version": 1,
+            "request_id": str(uuid4()),
+        }
+        assert (
+            client.post(
+                f"/v1/incidents/{incident_id}/proposals/{proposal_id}/approve",
+                headers=headers(Role.INVESTIGATOR),
+                json=decision_body,
+            ).status_code
+            == 403
+        )
         approved = client.post(
             f"/v1/incidents/{incident_id}/proposals/{proposal_id}/approve",
-            headers=headers,
-            json={"approver_identity": "operator@example.test"},
+            headers=headers(Role.APPROVER),
+            json=decision_body,
         )
         assert approved.status_code == 200
         assert approved.json()["status"] == "approved"
-        assert client.get(f"/v1/incidents/{incident_id}/audit/verify", headers=headers).json()[
-            "valid"
-        ]
+        assert client.get(
+            f"/v1/incidents/{incident_id}/audit/verify", headers=headers(Role.VIEWER)
+        ).json()["valid"]
         metrics = client.get("/metrics").text
         assert "incidentpilot_agent_investigations_total" in metrics
         assert "incidentpilot_agent_proposal_decisions_total" in metrics

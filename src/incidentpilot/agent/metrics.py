@@ -35,3 +35,9 @@ class AgentMetrics:
             ["outcome"],
             registry=registry,
         )
+        self.security_events = Counter(
+            "incidentpilot_agent_security_events_total",
+            "Bounded security control events",
+            ["event"],
+            registry=registry,
+        )

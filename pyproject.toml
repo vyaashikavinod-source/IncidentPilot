@@ -43,7 +43,8 @@ addopts = "--strict-config --strict-markers --cov=incidentpilot.shared --cov-rep
 markers = [
   "integration: requires the explicitly enabled real Docker Compose sandbox",
   "chaos_integration: mutates and restores the explicitly enabled local Compose sandbox",
-  "agent_integration: requires the explicitly enabled live incident service",
+    "agent_integration: requires the explicitly enabled live incident service",
+    "security: adversarial security-boundary tests",
 ]
 
 [tool.coverage.run]

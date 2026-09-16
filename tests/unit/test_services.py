@@ -280,6 +280,8 @@ def test_data_readiness_failure_and_internal_auth(monkeypatch: pytest.MonkeyPatc
     config = DataSettings(
         database_url=SecretStr("postgresql+psycopg://test@db/test"),
         internal_token=SecretStr("unit-test-only-token"),
+        incident_token=SecretStr("incident-test-token"),
+        audit_signing_secret=SecretStr("a" * 32),
     )
     with TestClient(data_app(config)) as client:
         assert client.get("/health").status_code == 200

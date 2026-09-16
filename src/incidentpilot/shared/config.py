@@ -3,7 +3,7 @@
 from typing import Literal
 from urllib.parse import urlsplit
 
-from pydantic import Field, SecretStr, field_validator
+from pydantic import Field, SecretStr, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -40,6 +40,9 @@ class AuthSettings(Settings):
 class DataSettings(Settings):
     database_url: SecretStr
     internal_token: SecretStr = Field(min_length=16)
+    incident_token: SecretStr = Field(min_length=16)
+    audit_signing_secret: SecretStr = Field(min_length=32)
+    investigation_lease_seconds: int = Field(default=600, ge=300, le=3600)
 
     @field_validator("database_url")
     @classmethod
@@ -129,7 +132,10 @@ class ControlPlaneSettings(HTTPSettings):
 class AgentSettings(HTTPSettings):
     data_url: str = "http://data:8000"
     evidence_url: str = "http://control-plane:8000"
-    internal_token: SecretStr = Field(min_length=16)
+    data_token: SecretStr = Field(min_length=16)
+    operator_signing_secret: SecretStr = Field(min_length=32)
+    operator_token_issuer: str = "incidentpilot-local"
+    operator_token_audience: str = "incidentpilot-operator-api"
     llm_provider: Literal["openai", "fake"] = "fake"
     llm_model: str = Field(default="gpt-5-mini", min_length=1, max_length=100)
     llm_api_key: SecretStr | None = None
@@ -143,5 +149,12 @@ class AgentSettings(HTTPSettings):
 
     @field_validator("data_url", "evidence_url")
     @classmethod
-    def validate_agent_url(cls, value: str) -> str:
-        return ClientSettings.http_url(value)
+    def validate_agent_url(cls, value: str, info: ValidationInfo) -> str:
+        normalized = ClientSettings.http_url(value)
+        parsed = urlsplit(normalized)
+        if parsed.scheme != "http" or parsed.port != 8000 or parsed.path not in {"", "/"}:
+            raise ValueError("agent service URLs must use the internal HTTP service port")
+        expected = "data" if info.field_name == "data_url" else "control-plane"
+        if parsed.hostname != expected:
+            raise ValueError("agent service URL host is not allowlisted")
+        return normalized

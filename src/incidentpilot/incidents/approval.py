@@ -16,6 +16,8 @@ def require_valid_approval(
     for approval in reversed(approvals):
         if (
             approval.proposal_id == proposal.proposal_id
+            and approval.incident_id == proposal.incident_id
+            and approval.proposal_version == proposal.version
             and approval.decision == "approved"
             and approval.proposal_hash == current_hash == proposal.proposal_hash
         ):

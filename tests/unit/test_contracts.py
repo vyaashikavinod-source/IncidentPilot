@@ -98,4 +98,6 @@ def test_service_configuration_validation() -> None:
     assert DataSettings(
         database_url=SecretStr("postgresql+psycopg://user:local@db/jobs"),
         internal_token=SecretStr("unit-test-only-token"),
+        incident_token=SecretStr("incident-test-token"),
+        audit_signing_secret=SecretStr("a" * 32),
     ).database_url

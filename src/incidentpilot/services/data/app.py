@@ -2,7 +2,7 @@ import secrets
 import time
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Annotated, Literal, cast
 from uuid import UUID
 
@@ -13,9 +13,26 @@ from sqlalchemy import create_engine, select, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
-from incidentpilot.incidents.audit import AuditAppend, AuditRecord, make_record
-from incidentpilot.incidents.models import Incident
+from incidentpilot.incidents.approval import proposal_hash
+from incidentpilot.incidents.audit import (
+    AuditAppend,
+    AuditCheckpoint,
+    AuditRecord,
+    ChainVerification,
+    create_checkpoint,
+    make_record,
+    verify_chain_report,
+    verify_checkpoint,
+)
+from incidentpilot.incidents.models import (
+    ApprovalDecisionCommand,
+    ApprovalRecord,
+    Incident,
+    IncidentStatus,
+    ProposalStatus,
+)
 from incidentpilot.services.data.models import (
+    AuditCheckpointRow,
     AuditRecordRow,
     DeploymentRecord,
     IncidentRecord,
@@ -74,6 +91,13 @@ def create_app(settings: DataSettings | None = None) -> FastAPI:
             (x_internal_token or "").encode(), config.internal_token.get_secret_value().encode()
         ):
             raise HTTPException(401, "internal credential required")
+
+    def incident_internal(x_incident_token: Annotated[str | None, Header()] = None) -> None:
+        if not secrets.compare_digest(
+            (x_incident_token or "").encode(),
+            config.incident_token.get_secret_value().encode(),
+        ):
+            raise HTTPException(401, "incident credential required")
 
     @app.get("/ready")
     def ready() -> dict[str, str]:
@@ -188,7 +212,7 @@ def create_app(settings: DataSettings | None = None) -> FastAPI:
             raise HTTPException(404, "incident_not_found")
         return record
 
-    @app.post("/v1/incidents", status_code=201, dependencies=[Depends(internal)])
+    @app.post("/v1/incidents", status_code=201, dependencies=[Depends(incident_internal)])
     def create_incident(body: Incident) -> Incident:
         with sessions.begin() as session:
             if session.get(IncidentRecord, body.incident_id):
@@ -196,12 +220,12 @@ def create_app(settings: DataSettings | None = None) -> FastAPI:
             session.add(IncidentRecord(id=body.incident_id, document=body.model_dump(mode="json")))
         return body
 
-    @app.get("/v1/incidents/{incident_id}", dependencies=[Depends(internal)])
+    @app.get("/v1/incidents/{incident_id}", dependencies=[Depends(incident_internal)])
     def get_incident(incident_id: UUID) -> Incident:
         with sessions() as session:
             return Incident.model_validate(find_incident(session, incident_id).document)
 
-    @app.put("/v1/incidents/{incident_id}", dependencies=[Depends(internal)])
+    @app.put("/v1/incidents/{incident_id}", dependencies=[Depends(incident_internal)])
     def update_incident(incident_id: UUID, body: Incident) -> Incident:
         if incident_id != body.incident_id:
             raise HTTPException(422, "incident_identity_mismatch")
@@ -214,7 +238,7 @@ def create_app(settings: DataSettings | None = None) -> FastAPI:
     @app.post(
         "/v1/incidents/{incident_id}/audit",
         status_code=201,
-        dependencies=[Depends(internal)],
+        dependencies=[Depends(incident_internal)],
     )
     def append_audit(incident_id: UUID, body: AuditAppend) -> AuditRecord:
         with sessions.begin() as session:
@@ -236,6 +260,8 @@ def create_app(settings: DataSettings | None = None) -> FastAPI:
             session.add(
                 AuditRecordRow(
                     id=item.audit_id,
+                    chain_version=item.chain_version,
+                    canonicalization_version=item.canonicalization_version,
                     incident_id=incident_id,
                     sequence=item.sequence,
                     timestamp=item.timestamp,
@@ -248,7 +274,7 @@ def create_app(settings: DataSettings | None = None) -> FastAPI:
             )
         return item
 
-    @app.get("/v1/incidents/{incident_id}/audit", dependencies=[Depends(internal)])
+    @app.get("/v1/incidents/{incident_id}/audit", dependencies=[Depends(incident_internal)])
     def get_audit(incident_id: UUID) -> list[AuditRecord]:
         with sessions() as session:
             find_incident(session, incident_id)
@@ -260,6 +286,8 @@ def create_app(settings: DataSettings | None = None) -> FastAPI:
             return [
                 AuditRecord(
                     audit_id=row.id,
+                    chain_version=row.chain_version,
+                    canonicalization_version=row.canonicalization_version,
                     sequence=row.sequence,
                     timestamp=row.timestamp,
                     event_type=row.event_type,
@@ -271,5 +299,196 @@ def create_app(settings: DataSettings | None = None) -> FastAPI:
                 )
                 for row in rows
             ]
+
+    @app.post(
+        "/v1/incidents/{incident_id}/claim-investigation",
+        dependencies=[Depends(incident_internal)],
+    )
+    def claim_investigation(incident_id: UUID) -> Incident:
+        with sessions.begin() as session:
+            record = find_incident(session, incident_id, lock=True)
+            incident = Incident.model_validate(record.document)
+            reclaimable = (
+                incident.status == IncidentStatus.INVESTIGATING
+                and incident.investigation_lease_expires_at is not None
+                and incident.investigation_lease_expires_at <= datetime.now(UTC)
+            )
+            if (
+                incident.status not in {IncidentStatus.OPEN, IncidentStatus.INVESTIGATION_FAILED}
+                and not reclaimable
+            ):
+                raise HTTPException(409, "investigation_already_claimed")
+            incident.status = IncidentStatus.INVESTIGATING
+            incident.investigation_started_at = datetime.now(UTC)
+            incident.investigation_completed_at = None
+            incident.investigation_error = None
+            incident.last_failure_at = None
+            incident.investigation_attempts += 1
+            incident.investigation_lease_expires_at = datetime.now(UTC) + timedelta(
+                seconds=config.investigation_lease_seconds
+            )
+            record.document = incident.model_dump(mode="json")
+            return incident
+
+    @app.post(
+        "/v1/incidents/{incident_id}/decision",
+        dependencies=[Depends(incident_internal)],
+    )
+    def record_decision(incident_id: UUID, body: ApprovalDecisionCommand) -> Incident:
+        with sessions.begin() as session:
+            record = find_incident(session, incident_id, lock=True)
+            incident = Incident.model_validate(record.document)
+            if any(item.request_id == body.request_id for item in incident.approvals):
+                previous = next(
+                    item for item in incident.approvals if item.request_id == body.request_id
+                )
+                if (
+                    previous.proposal_id == body.proposal_id
+                    and previous.proposal_hash == body.proposal_hash
+                    and previous.proposal_version == body.proposal_version
+                    and previous.decision == body.decision
+                ):
+                    return incident
+                raise HTTPException(409, "approval_request_replay_conflict")
+            if incident.status != IncidentStatus.PROPOSAL_READY:
+                raise HTTPException(409, "incident_not_ready_for_decision")
+            proposal = next(
+                (
+                    item
+                    for item in incident.remediation_proposals
+                    if item.proposal_id == body.proposal_id
+                ),
+                None,
+            )
+            if proposal is None or proposal.incident_id != incident_id:
+                raise HTTPException(404, "proposal_not_found")
+            if proposal.status != ProposalStatus.PROPOSED:
+                raise HTTPException(409, "proposal_already_decided")
+            if (
+                proposal.version != body.proposal_version
+                or proposal.proposal_hash != body.proposal_hash
+                or proposal_hash(proposal) != body.proposal_hash
+            ):
+                raise HTTPException(409, "stale_or_invalid_proposal")
+            approval = ApprovalRecord(
+                proposal_id=proposal.proposal_id,
+                incident_id=incident_id,
+                proposal_version=proposal.version,
+                proposal_hash=proposal.proposal_hash,
+                approver_identity=body.approver_identity,
+                decision=body.decision,
+                request_id=body.request_id,
+            )
+            incident.approvals.append(approval)
+            proposal.status = (
+                ProposalStatus.APPROVED if body.decision == "approved" else ProposalStatus.REJECTED
+            )
+            if body.decision == "approved":
+                incident.status = IncidentStatus.APPROVED
+            record.document = incident.model_dump(mode="json")
+            return incident
+
+    def audit_records(session: Session, incident_id: UUID) -> list[AuditRecord]:
+        rows = session.scalars(
+            select(AuditRecordRow)
+            .where(AuditRecordRow.incident_id == incident_id)
+            .order_by(AuditRecordRow.sequence)
+        )
+        return [
+            AuditRecord(
+                audit_id=row.id,
+                chain_version=row.chain_version,
+                canonicalization_version=row.canonicalization_version,
+                sequence=row.sequence,
+                timestamp=row.timestamp,
+                event_type=row.event_type,
+                incident_id=row.incident_id,
+                actor=row.actor,
+                metadata=row.event_metadata,
+                previous_hash=row.previous_hash,
+                record_hash=row.record_hash,
+            )
+            for row in rows
+        ]
+
+    @app.get(
+        "/v1/incidents/{incident_id}/audit/verify",
+        dependencies=[Depends(incident_internal)],
+    )
+    def verify_incident_audit(incident_id: UUID) -> ChainVerification:
+        with sessions() as session:
+            find_incident(session, incident_id)
+            return verify_chain_report(audit_records(session, incident_id))
+
+    @app.get("/v1/audit/verify", dependencies=[Depends(incident_internal)])
+    def verify_all_audits() -> dict[str, ChainVerification]:
+        with sessions() as session:
+            incident_ids = session.scalars(
+                select(IncidentRecord.id).order_by(IncidentRecord.id)
+            ).all()
+            return {
+                str(incident_id): verify_chain_report(audit_records(session, incident_id))
+                for incident_id in incident_ids
+            }
+
+    @app.post(
+        "/v1/incidents/{incident_id}/audit/checkpoints",
+        status_code=201,
+        dependencies=[Depends(incident_internal)],
+    )
+    def checkpoint_audit(incident_id: UUID) -> AuditCheckpoint:
+        with sessions.begin() as session:
+            find_incident(session, incident_id, lock=True)
+            checkpoint = create_checkpoint(
+                audit_records(session, incident_id), config.audit_signing_secret.get_secret_value()
+            )
+            session.add(
+                AuditCheckpointRow(
+                    incident_id=incident_id,
+                    checkpoint_version=checkpoint.checkpoint_version,
+                    last_sequence=checkpoint.last_sequence,
+                    last_record_hash=checkpoint.last_record_hash,
+                    checkpoint_timestamp=checkpoint.checkpoint_timestamp,
+                    signature=checkpoint.signature,
+                )
+            )
+            return checkpoint
+
+    @app.get(
+        "/v1/incidents/{incident_id}/audit/checkpoints/latest",
+        dependencies=[Depends(incident_internal)],
+    )
+    def latest_checkpoint(incident_id: UUID) -> AuditCheckpoint:
+        with sessions() as session:
+            row = session.scalar(
+                select(AuditCheckpointRow)
+                .where(AuditCheckpointRow.incident_id == incident_id)
+                .order_by(AuditCheckpointRow.checkpoint_timestamp.desc())
+                .limit(1)
+            )
+            if row is None:
+                raise HTTPException(404, "audit_checkpoint_not_found")
+            return AuditCheckpoint(
+                checkpoint_version=row.checkpoint_version,
+                incident_id=row.incident_id,
+                last_sequence=row.last_sequence,
+                last_record_hash=row.last_record_hash,
+                checkpoint_timestamp=row.checkpoint_timestamp,
+                signature=row.signature,
+            )
+
+    @app.get(
+        "/v1/incidents/{incident_id}/audit/checkpoints/verify",
+        dependencies=[Depends(incident_internal)],
+    )
+    def verify_latest_checkpoint(incident_id: UUID) -> dict[str, bool]:
+        checkpoint = latest_checkpoint(incident_id)
+        with sessions() as session:
+            records = audit_records(session, incident_id)[: checkpoint.last_sequence]
+        return {
+            "valid": verify_checkpoint(
+                checkpoint, records, config.audit_signing_secret.get_secret_value()
+            )
+        }
 
     return app

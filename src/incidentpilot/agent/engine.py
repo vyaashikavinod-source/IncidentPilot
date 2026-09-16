@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from incidentpilot.agent.prompts import SYSTEM_POLICY, investigation_prompt
-from incidentpilot.agent.provider import LLMProvider, ProviderError
+from incidentpilot.agent.provider import LLMProvider, ProviderError, RemediationDraft
 from incidentpilot.agent.tools import EvidenceToolError, EvidenceTools
 from incidentpilot.incidents.approval import proposal_hash
 from incidentpilot.incidents.models import (
@@ -103,10 +103,10 @@ class InvestigationEngine:
             )
         raise InvestigationError("investigation turn limit reached")
 
-    def _proposal(self, incident: Incident, data: dict[str, str] | None) -> RemediationProposal:
+    def _proposal(self, incident: Incident, data: RemediationDraft | None) -> RemediationProposal:
         if not incident.diagnosis:
             raise InvestigationError("proposal requires a diagnosis")
-        values: dict[str, Any] = data or {}
+        values: dict[str, Any] = data.model_dump() if data else {}
         proposal = RemediationProposal(
             incident_id=incident.incident_id,
             diagnosis_reference=incident.diagnosis.diagnosis_id,

@@ -16,6 +16,7 @@ class IncidentStatus(StrEnum):
     DIAGNOSED = "diagnosed"
     PROPOSAL_READY = "proposal_ready"
     APPROVED = "approved"
+    INVESTIGATION_FAILED = "investigation_failed"
     CLOSED = "closed"
 
 
@@ -30,10 +31,13 @@ class IncidentCreate(StrictModel):
     @field_validator("alert_metadata")
     @classmethod
     def bounded_metadata(cls, value: dict[str, str]) -> dict[str, str]:
+        sensitive = ("password", "secret", "token", "authorization", "api_key")
         if len(value) > 20 or any(
             not key or len(key) > 100 or len(item) > 500 for key, item in value.items()
         ):
             raise ValueError("alert metadata exceeds bounded key/value limits")
+        if any(any(term in key.casefold() for term in sensitive) for key in value):
+            raise ValueError("alert metadata contains a sensitive key")
         return value
 
 
@@ -93,6 +97,7 @@ class ProposalStatus(StrEnum):
 
 class RemediationProposal(StrictModel):
     proposal_id: UUID = Field(default_factory=uuid4)
+    version: int = Field(default=1, ge=1)
     incident_id: UUID
     diagnosis_reference: UUID
     proposed_action_type: Literal[
@@ -118,9 +123,12 @@ class RemediationProposal(StrictModel):
 class ApprovalRecord(StrictModel):
     approval_id: UUID = Field(default_factory=uuid4)
     proposal_id: UUID
+    incident_id: UUID
+    proposal_version: int = Field(ge=1)
     proposal_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
     approver_identity: str = Field(min_length=1, max_length=200)
     decision: Literal["approved", "rejected"]
+    request_id: UUID
     timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
@@ -148,6 +156,10 @@ class Incident(StrictModel):
     tool_call_count: int = 0
     input_tokens: int | None = None
     output_tokens: int | None = None
+    investigation_error: str | None = Field(default=None, max_length=500)
+    last_failure_at: datetime | None = None
+    investigation_attempts: int = Field(default=0, ge=0)
+    investigation_lease_expires_at: datetime | None = None
 
     @field_validator("alert_metadata")
     @classmethod
@@ -166,4 +178,12 @@ class Incident(StrictModel):
 
 
 class DecisionRequest(StrictModel):
+    proposal_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
+    proposal_version: int = Field(ge=1)
+    request_id: UUID
+
+
+class ApprovalDecisionCommand(DecisionRequest):
+    proposal_id: UUID
     approver_identity: str = Field(min_length=1, max_length=200)
+    decision: Literal["approved", "rejected"]
