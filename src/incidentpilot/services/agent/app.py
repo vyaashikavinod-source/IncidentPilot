@@ -160,6 +160,14 @@ def create_app(
         authorize(identity, Role.VIEWER, incident_id)
         return incident_store.get(incident_id)
 
+    @app.get("/v1/me")
+    def current_operator(
+        identity: Annotated[OperatorIdentity, Depends(operator)],
+    ) -> dict[str, object]:
+        """Return the already verified, non-sensitive operator identity for UI gating."""
+        role = next(role.value for role in Role if role in identity.roles)
+        return {"token_id": identity.token_id, "role": role}
+
     @app.get("/v1/incidents")
     def list_incidents(
         identity: Annotated[OperatorIdentity, Depends(operator)],

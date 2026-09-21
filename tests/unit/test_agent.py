@@ -540,6 +540,12 @@ def test_incident_api_has_approval_but_no_execution_route() -> None:
 
     with TestClient(app) as client:
         assert client.post("/v1/incidents", json={}).status_code == 401
+        assert client.get("/v1/me").status_code == 401
+        for role in (Role.VIEWER, Role.INVESTIGATOR, Role.APPROVER, Role.ADMIN):
+            response = client.get("/v1/me", headers=headers(role))
+            assert response.status_code == 200
+            assert response.json() == {"token_id": f"test-{role.value}", "role": role.value}
+            assert signing_secret not in response.text
         created = client.post(
             "/v1/incidents",
             headers=headers(Role.INVESTIGATOR),
