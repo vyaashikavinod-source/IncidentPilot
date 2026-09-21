@@ -1,176 +1,126 @@
 # IncidentPilot
 
-Phase 4 security architecture and trust assumptions are documented in
-[docs/security-hardening.md](docs/security-hardening.md).
+Evidence-driven autonomous incident investigation for SRE workflows with bounded tools, historical incident memory, tamper-evident audit, chaos evaluation, and explicit human approval controls.
 
-Phase 5 memory and evaluation controls are documented in
-[docs/phase5-memory-evaluation.md](docs/phase5-memory-evaluation.md).
+IncidentPilot does not execute production-changing remediation.
 
-Phase 3 adds a bounded evidence-driven investigation service. It produces structured diagnoses and
-proposal-only remediation recommendations, then stops. See
-[agent investigation](docs/agent-investigation.md). It cannot execute remediation.
+## Overview
 
-Phase 2 adds operator-side failure benchmark infrastructure and deterministic
-ground-truth scoring. See [chaos and evaluation](docs/chaos-evaluation.md). It does
-not implement an autonomous incident agent or remediation execution.
+IncidentPilot provides a monitored multi-service sandbox and an operator console for investigating persisted incidents. The Agent API collects and presents bounded, read-only operational evidence, correlates it with historical incident memory, persists a structured diagnosis and proposal, and stops at a human decision gate.
 
-Phase 1 application slice: an asynchronous job workflow using FastAPI,
-PostgreSQL, Redis and Celery. Service code and Compose configuration are present;
-see `docs/validation.md` for what has actually been executed in this environment.
-There is no remediation execution, long-term incident memory, multi-agent orchestration, or
-infrastructure mutation API. Chaos remains an operator-only host capability.
-The sandbox now includes metrics, tracing, centralized logs, and provisioned
-dashboards.
+## Key Features
 
-## Implemented workflow
+- FastAPI services backed by PostgreSQL, Redis, and Celery
+- Prometheus metrics, OpenTelemetry traces, Loki logs, Tempo traces, and Grafana dashboards
+- Read-only evidence adapters for current service status, metrics, logs, traces, and deployment history
+- Persisted investigation steps, diagnoses, proposals, historical memory, and tamper-evident audit records
+- Operator console with bearer-token sessions and backend-authoritative roles
+- Proposal approval/rejection records with proposal hash and version binding
+- Deterministic chaos and evaluation harnesses for the sandbox
 
-1. Client submits `POST /v1/jobs` with a sandbox bearer token and an
-   `Idempotency-Key`.
-2. Gateway calls auth, which returns the single `sandbox-user` identity.
-3. Gateway calls data to persist a queued job, then publishes its ID and the
-   originating request ID to the Redis-backed Celery queue.
-4. Worker reads and updates the job through the data API: running, then completed
-   with word count, character count and SHA-256 of the description.
-5. Authenticated `GET /v1/jobs/{id}` retrieves the current state. Gateway checks
-   ownership; a different owner is reported as not found.
+## Architecture
 
-Only data (and the one-shot migration process) receives PostgreSQL credentials.
-Gateway and worker use HTTP; neither contains database-access code.
+```mermaid
+flowchart LR
+  Browser[Operator Browser] --> Frontend[Frontend]
+  Frontend --> Agent[Agent API]
+  Agent --> Control[Evidence Control Plane]
+  Control --> Prometheus
+  Control --> Loki
+  Control --> Tempo
+  Control --> Deployments[Deployment History]
+  Agent --> Data[Data Service]
+  Data --> Postgres[(PostgreSQL)]
+  Agent --> LLM[LLM Provider abstraction]
 
-## Local sandbox startup
+  Gateway --> Auth
+  Gateway --> SandboxData[Data]
+  SandboxData --> Redis[Redis / Celery]
+  Redis --> Worker
 
-Requires Docker Engine with Linux containers and Docker Compose. Python 3.11+
-is required for host-side development; checks here use Python 3.12.
+  Chaos[Chaos controller\nhost/operator-only]
+```
 
-Copy `.env.example` to `.env`, then fill the four blank values with independent
-random hexadecimal strings. For example, run `python -c "import secrets;
-print(secrets.token_hex(24))"` separately for each value. Never commit `.env`.
-An ignored `.env` may already exist from local validation; preserve it.
+The Agent API has no Docker socket, shell, direct PostgreSQL, Redis, Celery, chaos-control, or arbitrary HTTP capability. Evidence collection and any future execution capability are separate by design.
 
-**SANDBOX ONLY:** the bearer token authenticates one fixed development identity.
-This is not a production identity system. Internal HTTP uses a separate shared
-sandbox token, and Redis trusts the isolated local network. No production use.
-Compose requires nonempty values; application settings also validate token lengths,
-URLs, timeouts and retry limits. Use hexadecimal DB passwords so they are URL-safe.
+## Application Sandbox
+
+The sandbox models a gateway, authentication service, data service, Redis/Celery queue, and worker. It is intentionally a local, monitored environment for operational investigation and evaluation.
+
+## Evidence Plane
+
+The Agent API reaches the evidence control plane through typed, allow-listed calls. Evidence is classified as current operational evidence or historical memory. Historical memory is always an analogy, never current proof.
+
+## Investigation Workflow
+
+1. An authenticated operator views a persisted incident.
+2. The Agent API records structured investigation steps using bounded evidence tools.
+3. A diagnosis cites current evidence and records uncertainty.
+4. A remediation proposal is persisted with a hash and version.
+5. An approver can record approval or rejection. This does not execute remediation.
+
+## Historical Incident Memory
+
+Historical memories are retrieved through typed queries and displayed in the console with the label **Historical analogy — not current proof**. They remain untrusted context; current evidence is mandatory for a diagnosis.
+
+## Security Model
+
+Bearer tokens are validated server-side into an `OperatorIdentity`. The console stores only the active token in `sessionStorage` and obtains the role from `GET /v1/me`; it does not guess permissions client-side. The backend remains authoritative for RBAC and all proposal decisions.
+
+The control plane has no generic shell execution, Docker access, raw telemetry query console, infrastructure mutation API, or direct datastore credentials.
+
+## Human Approval Model
+
+Proposal decisions bind an incident, proposal ID, proposal hash, proposal version, and request ID. The console shows these values in a confirmation dialog before an approve or reject request. It states:
+
+> APPROVAL DOES NOT EXECUTE REMEDIATION
+
+> This records a human decision only. IncidentPilot does not execute remediation.
+
+## Chaos Evaluation
+
+Chaos scenarios are restricted to host/operator-only control. Deterministic evaluation records compare investigation output with benchmark ground truth without exposing hidden truth to the Agent API or operator console.
+
+## Operator Console
+
+The React/Vite console provides incident browsing, filters, pagination, a detailed investigation workspace, current evidence, historical memory, diagnosis uncertainty, proposals, and role-gated decision controls. It includes no execute, restart, deploy, rollback, scale, Docker, shell, SQL, or chaos controls.
+
+## Running Locally
+
+Copy `.env.example` to `.env`, fill required local secrets, then start the sandbox:
 
 ```sh
 docker compose config --quiet
 docker compose build
-docker compose up -d
-docker compose ps
-docker compose logs -f gateway auth data worker
+docker compose up -d --wait
+docker compose ps --all
 ```
 
-`config --quiet` validates without printing resolved credentials. The `migrate`
-service must exit successfully before data starts. It runs `alembic upgrade head`;
-normal HTTP service startup never creates tables automatically. PostgreSQL's
-initialization SQL creates a non-superuser application role only for a fresh volume.
-Changing `.env` does not rotate credentials inside an existing database volume.
+The operator console is available at `http://127.0.0.1:3001`; the Agent API is available at `http://127.0.0.1:8002`.
 
-Stop with `docker compose down`; named PostgreSQL and Redis volumes remain.
-Do not remove volumes unless you intend to discard sandbox data.
-
-| Service | Port / access | Readiness |
-| --- | --- | --- |
-| Gateway | host `127.0.0.1:${INCIDENTPILOT_GATEWAY_PORT:-8000}` | auth, data and Redis respond |
-| Auth | internal `auth:8000` | validated configuration loaded |
-| Data | internal `data:8000` | PostgreSQL query against jobs succeeds |
-| Worker | internal `worker:9100` | Prometheus metrics endpoint responds |
-| PostgreSQL | internal `postgres:5432` | pg_isready |
-| Redis | internal `redis:6379` | PING |
-| Grafana | host `127.0.0.1:3000` | Grafana health endpoint |
-| Prometheus, Loki, Tempo, Collector | internal only | container health checks |
-
-HTTP services expose `/health` for process liveness and `/ready` for readiness.
-Readiness failures return 503. The worker ping confirms worker/broker connectivity;
-it does not promise the data service will remain available when a task starts.
-
-To submit and retrieve a job from PowerShell (set the token from your local `.env`):
-
-```powershell
-$headers = @{ Authorization = "Bearer $env:INCIDENTPILOT_SANDBOX_AUTH_TOKEN"; "X-Request-ID" = [guid]::NewGuid().ToString(); "Idempotency-Key" = [guid]::NewGuid().ToString() }
-$job = Invoke-RestMethod http://127.0.0.1:8000/v1/jobs -Method Post -Headers $headers -ContentType application/json -Body '{"description":"hello incident pilot"}'
-Invoke-RestMethod "http://127.0.0.1:8000/v1/jobs/$($job.id)" -Headers $headers
-```
-
-Successful POST returns HTTP 202 with the queued record and an
-`Idempotency-Replayed` header. Repeating the same owner/key/payload returns the
-original row without another queue publication; changing the payload returns
-409. GET uses the same Job
-schema: ID, owner, description, status, result, error and UTC timestamps.
-Missing or invalid credentials return 401; invalid bodies return 422. Valid
-UUID `X-Request-ID` headers are preserved (canonicalized); others are replaced.
-The ID appears in response headers, inter-service requests, Celery arguments and
-application JSON logs. This is correlation, not distributed tracing.
-
-## Failure and delivery semantics
-
-Jobs progress `queued -> running -> completed`, or `queued/running -> failed`.
-Terminal outcomes are immutable; repeating an identical PATCH is idempotent.
-Data locks the row for transitions. Redis uses AOF and no-eviction behavior;
-Celery uses JSON serialization, late acknowledgement, a 300-second visibility
-timeout and a 90-second task hard limit. Work is deterministic and has no external
-side effects, so duplicate deliveries can safely repeat the calculation.
-
-Worker transport/5xx/429 failures retry at most three times after the initial
-attempt, with a two-second delay by default (validated limits: 0–5 retries).
-Permanent HTTP errors and processing errors do not retry. At exhaustion it tries
-to persist a failed outcome, logs if that is impossible, and raises the error.
-A complete data outage or hard worker termination can leave a nonterminal row.
-There is no reconciliation or remediation process in this slice.
-
-PostgreSQL commit and broker publication are **not atomic**. If publication fails,
-the gateway returns 503 with the job ID and attempts to mark the job failed. An
-ambiguous broker acknowledgement can race with processing. Query the returned ID;
-retrying POST with the same key returns that failed job without publishing it
-again. A transactional outbox is not implemented, and exactly-once delivery is
-not claimed.
-
-## Development and tests
+## Testing
 
 ```sh
-python -m venv .venv
-# POSIX: source .venv/bin/activate
-# PowerShell: .venv\Scripts\Activate.ps1
-python -m pip install --require-hashes -r requirements-dev.lock
-python -m pip install --no-deps -e .
 python -m pytest
 python -m ruff check .
 python -m ruff format --check .
 python -m mypy
 python -m pip check
+
+cd frontend
+npm test
+npm run lint
+npm run typecheck
+npm run build
 ```
 
-GNU Make equivalents: `make install-locked`, `make check`, `make test`, `make lint`,
-`make typecheck`. `make lock` regenerates both hash-pinned lock files with pip-tools.
-Dependency extras separate API, database and queue tooling.
-The observability extra contains the OpenTelemetry SDK, exporters, and framework instrumentations used by the services.
-Application builds install the runtime lock before installing the local package
-without dependency resolution. External images retain readable version tags and
-are pinned to registry digests.
+## Current Validation
 
-Tests use explicit mock transports for unit isolation and label these as unit
-checks. Real integration tests require the running Compose stack and opt-in:
+The repository includes unit, security-boundary, contract, persistence, and frontend component tests. Compose validation verifies service health and migration completion. The current Alembic head is `0007_benchmark_persistence`.
 
-```powershell
-$env:INCIDENTPILOT_RUN_INTEGRATION = "1"
-.\.venv\Scripts\python.exe -m pytest -m integration --no-cov
-```
+## Current Limitations
 
-Without opt-in, integration tests explicitly skip. Once enabled, unavailable
-services are failures, not skips. Tests verify real Celery completion, the
-persisted PostgreSQL row, per-service correlation logs and internal CRUD. They
-leave their job rows in the sandbox. They do not stop services or inject faults.
-The 90% branch-coverage gate currently covers shared code, not the entire system.
-
-Service processes read environment variables, not `.env` automatically. Compose
-selectively injects them. For manual startup, export only the variables needed
-by that service and run `uvicorn incidentpilot.services.<service>.app:create_app
---factory --port 8000 --no-access-log` (service is auth, data or gateway).
-Worker command: `celery -A incidentpilot.services.worker.app:app worker
---concurrency=1 --loglevel=INFO`. Run workers in Linux containers.
-
-See [architecture](docs/architecture.md), [hardening](docs/hardening.md),
-[observability](docs/observability.md), and [validation](docs/validation.md).
-The [evidence-plane guide](docs/evidence-plane.md) documents the bounded read-only
-operator API and its enforced permission boundary.
+- REAL AGENT EVALUATION BLOCKED — NO CONFIGURED LLM PROVIDER
+- MANUAL BASELINE PENDING — NO RECORDED HUMAN RUNS
+- No real-model diagnostic-accuracy claim is made.
+- IncidentPilot does not execute production-changing remediation.
