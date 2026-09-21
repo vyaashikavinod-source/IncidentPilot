@@ -1,0 +1,3 @@
+import { ApiClient } from "./client";
+export type Memory = { memory: { memory_id: string; incident_id: string; affected_service: string; failure_class: string; root_cause_summary: string; investigation_summary: string; remediation_proposal_summary: string; outcome: string | null; evidence_categories: string[]; confidence: number; tags: string[] }; score: number };
+export const searchMemory = (client: ApiClient, service?: string) => client.get<Memory[]>("/v1/memory", { affected_service: service });
