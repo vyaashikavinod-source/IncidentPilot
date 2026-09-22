@@ -8,7 +8,7 @@ install-locked:
 	$(PYTHON) -m pip install --no-deps -e .
 lock:
 	$(PYTHON) -m piptools compile --pre --resolver=backtracking --generate-hashes --strip-extras --extra=api --extra=data --extra=worker --extra=observability --output-file=requirements.lock pyproject.toml
-	$(PYTHON) -m piptools compile --pre --resolver=backtracking --generate-hashes --strip-extras --all-extras --output-file=requirements-dev.lock pyproject.toml
+	$(PYTHON) -m piptools compile --pre --resolver=backtracking --generate-hashes --allow-unsafe --strip-extras --all-extras --output-file=requirements-dev.lock pyproject.toml
 check: lint typecheck test
 test:
 	$(PYTHON) -m pytest
