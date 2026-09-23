@@ -607,3 +607,58 @@ def test_incident_api_has_approval_but_no_execution_route() -> None:
         )
         for path in paths
     )
+
+
+def test_operator_console_cors_is_exact_and_optional() -> None:
+    configured = AgentSettings(
+        data_token="d" * 16,
+        operator_signing_secret="s" * 32,
+        operator_console_origin="https://console.example",
+    )
+    with TestClient(create_app(configured)) as client:
+        allowed = client.options(
+            "/v1/me",
+            headers={
+                "Origin": "https://console.example",
+                "Access-Control-Request-Method": "GET",
+                "Access-Control-Request-Headers": "authorization,content-type,x-request-id",
+            },
+        )
+        assert allowed.status_code == 200
+        assert allowed.headers["access-control-allow-origin"] == "https://console.example"
+        assert allowed.headers.get("access-control-allow-credentials") is None
+        assert {"GET", "POST", "OPTIONS"} <= set(
+            allowed.headers["access-control-allow-methods"].split(", ")
+        )
+
+        rejected = client.options(
+            "/v1/me",
+            headers={"Origin": "https://other.example", "Access-Control-Request-Method": "GET"},
+        )
+        assert rejected.headers.get("access-control-allow-origin") is None
+
+    with TestClient(
+        create_app(AgentSettings(data_token="d" * 16, operator_signing_secret="s" * 32))
+    ) as client:
+        unconfigured = client.options(
+            "/v1/me",
+            headers={"Origin": "https://console.example", "Access-Control-Request-Method": "GET"},
+        )
+        assert unconfigured.headers.get("access-control-allow-origin") is None
+
+
+@pytest.mark.parametrize(
+    "origin",
+    [
+        "ftp://console.example",
+        "https://user:pass@console.example",
+        "https://console.example/path",
+        "https://console.example?query=value",
+        "https://console.example#fragment",
+    ],
+)
+def test_operator_console_origin_rejects_non_origin_urls(origin: str) -> None:
+    with pytest.raises(ValidationError):
+        AgentSettings(
+            data_token="d" * 16, operator_signing_secret="s" * 32, operator_console_origin=origin
+        )

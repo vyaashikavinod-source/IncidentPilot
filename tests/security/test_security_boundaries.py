@@ -220,3 +220,48 @@ def test_compose_preserves_agent_isolation_and_no_execution_route_source() -> No
     control = (root / "src/incidentpilot/services/control_plane/app.py").read_text(encoding="utf-8")
     assert "@app.post" not in control
     assert "ground_truth" not in agent
+
+
+@pytest.mark.parametrize("url", ["http://data:8000", "http://data.railway.internal:8000"])
+def test_agent_allows_local_and_railway_data_hosts(url: str) -> None:
+    assert (
+        AgentSettings(data_token="d" * 16, operator_signing_secret=SECRET, data_url=url).data_url
+        == url
+    )
+
+
+@pytest.mark.parametrize(
+    "url", ["http://control-plane:8000", "http://control-plane.railway.internal:8000"]
+)
+def test_agent_allows_local_and_railway_evidence_hosts(url: str) -> None:
+    assert (
+        AgentSettings(
+            data_token="d" * 16, operator_signing_secret=SECRET, evidence_url=url
+        ).evidence_url
+        == url
+    )
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://data.other.railway.internal:8000",
+        "http://evil.railway.internal:8000",
+        "http://data.railway.internal:9000",
+    ],
+)
+def test_agent_rejects_unallowlisted_railway_data_hosts(url: str) -> None:
+    with pytest.raises(ValidationError):
+        AgentSettings(data_token="d" * 16, operator_signing_secret=SECRET, data_url=url)
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://control-plane.other.railway.internal:8000",
+        "https://control-plane.railway.internal:8000",
+    ],
+)
+def test_agent_rejects_unallowlisted_railway_evidence_hosts(url: str) -> None:
+    with pytest.raises(ValidationError):
+        AgentSettings(data_token="d" * 16, operator_signing_secret=SECRET, evidence_url=url)

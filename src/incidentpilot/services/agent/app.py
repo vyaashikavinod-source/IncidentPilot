@@ -7,6 +7,7 @@ from typing import Annotated, Literal
 from uuid import UUID
 
 from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 
 from incidentpilot.agent.engine import InvestigationEngine, InvestigationError
 from incidentpilot.agent.metrics import AgentMetrics
@@ -82,6 +83,14 @@ def create_app(
             telemetry.shutdown()
 
     app = FastAPI(title="IncidentPilot investigation service", lifespan=lifespan)
+    if config.operator_console_origin:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=[config.operator_console_origin],
+            allow_credentials=False,
+            allow_methods=["GET", "POST", "OPTIONS"],
+            allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
+        )
     telemetry = configure_telemetry(config, app)
     configure_http(app)
     metrics.install(app)

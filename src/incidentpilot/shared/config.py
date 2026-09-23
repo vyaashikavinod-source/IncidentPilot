@@ -14,7 +14,7 @@ class Settings(BaseSettings):
         env_prefix="INCIDENTPILOT_", extra="forbid", hide_input_in_errors=True
     )
 
-    environment: Literal["local", "test"] = "local"
+    environment: Literal["local", "test", "production"] = "local"
     service_name: str = Field(default="incidentpilot", pattern=r"^[a-z][a-z0-9_-]{0,62}$")
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     telemetry_enabled: bool = False
@@ -160,6 +160,27 @@ class AgentSettings(HTTPSettings):
     investigation_max_seconds: int = Field(default=90, ge=10, le=300)
     investigation_max_evidence_bytes: int = Field(default=100_000, ge=10_000, le=500_000)
     llm_temperature: float = Field(default=0, ge=0, le=1)
+    operator_console_origin: str | None = None
+
+    @field_validator("operator_console_origin")
+    @classmethod
+    def validate_operator_console_origin(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        parsed = urlsplit(value)
+        if (
+            parsed.scheme not in {"http", "https"}
+            or not parsed.hostname
+            or parsed.username
+            or parsed.password
+            or parsed.query
+            or parsed.fragment
+            or parsed.path not in {"", "/"}
+        ):
+            raise ValueError(
+                "operator_console_origin must be an HTTP(S) origin without credentials"
+            )
+        return value.rstrip("/")
 
     @field_validator("data_url", "evidence_url")
     @classmethod
@@ -168,7 +189,11 @@ class AgentSettings(HTTPSettings):
         parsed = urlsplit(normalized)
         if parsed.scheme != "http" or parsed.port != 8000 or parsed.path not in {"", "/"}:
             raise ValueError("agent service URLs must use the internal HTTP service port")
-        expected = "data" if info.field_name == "data_url" else "control-plane"
-        if parsed.hostname != expected:
+        expected = (
+            {"data", "data.railway.internal"}
+            if info.field_name == "data_url"
+            else {"control-plane", "control-plane.railway.internal"}
+        )
+        if parsed.hostname not in expected:
             raise ValueError("agent service URL host is not allowlisted")
         return normalized

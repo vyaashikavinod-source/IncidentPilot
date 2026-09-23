@@ -32,7 +32,7 @@ def test_environment_overrides(monkeypatch: pytest.MonkeyPatch) -> None:
 
 @pytest.mark.parametrize(
     ("name", "value"),
-    [("ENVIRONMENT", "production"), ("SERVICE_NAME", "bad name"), ("LOG_LEVEL", "TRACE")],
+    [("SERVICE_NAME", "bad name"), ("LOG_LEVEL", "TRACE")],
 )
 def test_invalid_environment_rejected(
     monkeypatch: pytest.MonkeyPatch, name: str, value: str
@@ -40,3 +40,8 @@ def test_invalid_environment_rejected(
     monkeypatch.setenv(f"INCIDENTPILOT_{name}", value)
     with pytest.raises(ValidationError):
         Settings()
+
+
+def test_production_environment_is_accepted(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("INCIDENTPILOT_ENVIRONMENT", "production")
+    assert Settings().environment == "production"
