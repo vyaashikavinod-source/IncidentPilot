@@ -17,6 +17,9 @@ import { Workspace } from "./workspace";
 import "./styles.css";
 
 const sessionKey = "incidentpilot.operator-token";
+const deploymentLabel =
+  import.meta.env.VITE_DEPLOYMENT_LABEL ??
+  (import.meta.env.PROD ? "PRODUCTION" : "LOCAL");
 const formatTime = (value: string) => new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 const SeverityBadge = ({ severity }: { severity: Severity }) => <span className={`badge severity-${severity}`}>{severity}</span>;
 const StatusBadge = ({ status }: { status: string }) => <span className="badge status">{status.replaceAll("_", " ")}</span>;
@@ -68,7 +71,7 @@ export function Detail({ client, setConnected, role }: { client: ApiClient; setC
 }
 
 function Shell({ children, connected, signOut, role }: { children: React.ReactNode; connected: boolean; signOut: () => void; role: string | null }) {
-  return <div className="shell"><aside><Link className="brand" to="/dashboard">IncidentPilot<span>OPERATOR CONSOLE</span></Link><nav><Link to="/dashboard">Dashboard</Link><Link to="/incidents">Incidents</Link></nav></aside><main><header><span className={`connection ${connected ? "online" : "offline"}`}><i />API {connected ? "Connected" : "Unavailable"}</span>{role && <span className="role">{role}</span>}<span className="environment">LOCAL</span><button className="quiet" onClick={signOut}>Sign out</button></header>{children}</main></div>;
+  return <div className="shell"><aside><Link className="brand" to="/dashboard">IncidentPilot<span>OPERATOR CONSOLE</span></Link><nav><Link to="/dashboard">Dashboard</Link><Link to="/incidents">Incidents</Link></nav></aside><main><header><span className={`connection ${connected ? "online" : "offline"}`}><i />API {connected ? "Connected" : "Unavailable"}</span>{role && <span className="role">{role}</span>}<span className="environment">{deploymentLabel}</span><button className="quiet" onClick={signOut}>Sign out</button></header>{children}</main></div>;
 }
 
 export function Console() {
