@@ -1,0 +1,1358 @@
+{
+  "schema_version": 1,
+  "benchmark_sha256": "087c64082dc9ca2089d272650d5072000692222451a39057a083e541eaceb8d8",
+  "runs": [
+    {
+      "schema_version": 1,
+      "evidence_type": "real_model_requests",
+      "model": "qwen2.5-1.5b-instruct-q4-k-m",
+      "model_role": "small-zero-shot",
+      "created_at": "2026-11-18T03:17:48.170177+00:00",
+      "benchmark_sha256": "087c64082dc9ca2089d272650d5072000692222451a39057a083e541eaceb8d8",
+      "prompt_version": "cuad-classification-id-v3-taxonomy",
+      "metrics": {
+        "sample_size": 200,
+        "accuracy": 0.2,
+        "macro_f1_all_categories": 0.19100234215011833,
+        "macro_f1_supported_categories": 0.19577740070387128,
+        "weighted_f1": 0.20838526179702652,
+        "invalid_output_rate": 0.57,
+        "request_error_rate": 0.0,
+        "per_category": {
+          "affiliate_license_licensee": {
+            "support": 2,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "affiliate_license_licensor": {
+            "support": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": null,
+            "f1": 0.0
+          },
+          "agreement_date": {
+            "support": 6,
+            "precision": 0.5454545454545454,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 0.7058823529411764
+          },
+          "anti_assignment": {
+            "support": 6,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "audit_rights": {
+            "support": 6,
+            "precision": 0.7142857142857143,
+            "recall": 0.8333333333333334,
+            "accuracy_within_category": 0.8333333333333334,
+            "f1": 0.7692307692307692
+          },
+          "cap_on_liability": {
+            "support": 6,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "change_of_control": {
+            "support": 6,
+            "precision": 0.5,
+            "recall": 0.16666666666666666,
+            "accuracy_within_category": 0.16666666666666666,
+            "f1": 0.25
+          },
+          "competitive_restriction_exception": {
+            "support": 6,
+            "precision": 1.0,
+            "recall": 0.16666666666666666,
+            "accuracy_within_category": 0.16666666666666666,
+            "f1": 0.2857142857142857
+          },
+          "covenant_not_to_sue": {
+            "support": 6,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "document_name": {
+            "support": 6,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "effective_date": {
+            "support": 6,
+            "precision": 0.6666666666666666,
+            "recall": 0.3333333333333333,
+            "accuracy_within_category": 0.3333333333333333,
+            "f1": 0.4444444444444444
+          },
+          "exclusivity": {
+            "support": 6,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "expiration_date": {
+            "support": 6,
+            "precision": 1.0,
+            "recall": 0.16666666666666666,
+            "accuracy_within_category": 0.16666666666666666,
+            "f1": 0.2857142857142857
+          },
+          "governing_law": {
+            "support": 6,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 1.0
+          },
+          "insurance": {
+            "support": 6,
+            "precision": 1.0,
+            "recall": 0.3333333333333333,
+            "accuracy_within_category": 0.3333333333333333,
+            "f1": 0.5
+          },
+          "ip_ownership_assignment": {
+            "support": 6,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "irrevocable_or_perpetual_license": {
+            "support": 1,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "joint_ip_ownership": {
+            "support": 6,
+            "precision": 0.42857142857142855,
+            "recall": 0.5,
+            "accuracy_within_category": 0.5,
+            "f1": 0.4615384615384615
+          },
+          "license_grant": {
+            "support": 6,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "liquidated_damages": {
+            "support": 6,
+            "precision": 0.25,
+            "recall": 0.16666666666666666,
+            "accuracy_within_category": 0.16666666666666666,
+            "f1": 0.2
+          },
+          "minimum_commitment": {
+            "support": 6,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "most_favored_nation": {
+            "support": 6,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "no_solicit_of_customers": {
+            "support": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "no_solicit_of_employees": {
+            "support": 6,
+            "precision": 1.0,
+            "recall": 0.16666666666666666,
+            "accuracy_within_category": 0.16666666666666666,
+            "f1": 0.2857142857142857
+          },
+          "non_compete": {
+            "support": 6,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "non_disparagement": {
+            "support": 5,
+            "precision": 1.0,
+            "recall": 0.2,
+            "accuracy_within_category": 0.2,
+            "f1": 0.33333333333333337
+          },
+          "non_transferable_license": {
+            "support": 5,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "notice_period_to_terminate_renewal": {
+            "support": 1,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "parties": {
+            "support": 5,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "post_termination_services": {
+            "support": 5,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "price_restrictions": {
+            "support": 5,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "renewal_term": {
+            "support": 5,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "revenue_profit_sharing": {
+            "support": 5,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "rofr_rofo_rofn": {
+            "support": 5,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "source_code_escrow": {
+            "support": 4,
+            "precision": 1.0,
+            "recall": 0.5,
+            "accuracy_within_category": 0.5,
+            "f1": 0.6666666666666666
+          },
+          "termination_for_convenience": {
+            "support": 5,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "third_party_beneficiary": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 0.5,
+            "accuracy_within_category": 0.5,
+            "f1": 0.6666666666666666
+          },
+          "uncapped_liability": {
+            "support": 5,
+            "precision": 0.3125,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 0.47619047619047616
+          },
+          "unlimited_all_you_can_eat_license": {
+            "support": 1,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "volume_restriction": {
+            "support": 5,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "warranty_duration": {
+            "support": 5,
+            "precision": 0.6666666666666666,
+            "recall": 0.4,
+            "accuracy_within_category": 0.4,
+            "f1": 0.5
+          }
+        }
+      },
+      "completed_requests": 200,
+      "duration_seconds": 310.10457229999884,
+      "latency_median_seconds": 1.3485968500026502,
+      "latency_p95_seconds": 2.7193075999966823,
+      "throughput_clauses_per_second": 0.6449437314536518,
+      "input_tokens": 516120,
+      "output_tokens": 1365,
+      "estimated_cost_usd": 0.0,
+      "cost_per_1000_clauses_usd": 0.0,
+      "pricing": {
+        "input_usd_per_million": 0.0,
+        "output_usd_per_million": 0.0,
+        "source": "Local CPU inference; zero API token charge, hardware/electricity excluded"
+      },
+      "server_peak_memory_bytes": 2080186368,
+      "server_memory_note": "Windows shared inference-process peak across agent and clause benchmarks",
+      "records_sha256": "001da4d226161d5033602c3ee122ac2e4ea7c5821b0f9f3fd46c3f79045914aa",
+      "model_provenance": {
+        "publisher": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+        "revision": "91cad51170dc346986eccefdc2dd33a9da36ead9",
+        "sha256": "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e",
+        "quantization": "Q4_K_M",
+        "project_fine_tuning": false
+      }
+    },
+    {
+      "schema_version": 1,
+      "evidence_type": "real_model_requests",
+      "model": "qwen15b-pilot-25steps",
+      "model_role": "fine-tuned",
+      "created_at": "2026-11-18T04:58:54.278490+00:00",
+      "benchmark_sha256": "087c64082dc9ca2089d272650d5072000692222451a39057a083e541eaceb8d8",
+      "prompt_version": "cuad-classification-id-v3-taxonomy",
+      "metrics": {
+        "sample_size": 200,
+        "accuracy": 0.425,
+        "macro_f1_all_categories": 0.36646567206108094,
+        "macro_f1_supported_categories": 0.375627313862608,
+        "weighted_f1": 0.405169138051491,
+        "invalid_output_rate": 0.145,
+        "request_error_rate": 0,
+        "per_category": {
+          "affiliate_license_licensee": {
+            "support": 2,
+            "precision": 0,
+            "recall": 0,
+            "accuracy_within_category": 0,
+            "f1": 0
+          },
+          "affiliate_license_licensor": {
+            "support": 0,
+            "precision": 0,
+            "recall": 0,
+            "accuracy_within_category": null,
+            "f1": 0
+          },
+          "agreement_date": {
+            "support": 6,
+            "precision": 0,
+            "recall": 0,
+            "accuracy_within_category": 0,
+            "f1": 0
+          },
+          "anti_assignment": {
+            "support": 6,
+            "precision": 1,
+            "recall": 0.16666666666666666,
+            "accuracy_within_category": 0.16666666666666666,
+            "f1": 0.2857142857142857
+          },
+          "audit_rights": {
+            "support": 6,
+            "precision": 1,
+            "recall": 1,
+            "accuracy_within_category": 1,
+            "f1": 1
+          },
+          "cap_on_liability": {
+            "support": 6,
+            "precision": 0,
+            "recall": 0,
+            "accuracy_within_category": 0,
+            "f1": 0
+          },
+          "change_of_control": {
+            "support": 6,
+            "precision": 0.2727272727272727,
+            "recall": 0.5,
+            "accuracy_within_category": 0.5,
+            "f1": 0.3529411764705882
+          },
+          "competitive_restriction_exception": {
+            "support": 6,
+            "precision": 0,
+            "recall": 0,
+            "accuracy_within_category": 0,
+            "f1": 0
+          },
+          "covenant_not_to_sue": {
+            "support": 6,
+            "precision": 0,
+            "recall": 0,
+            "accuracy_within_category": 0,
+            "f1": 0
+          },
+          "document_name": {
+            "support": 6,
+            "precision": 0.5,
+            "recall": 0.16666666666666666,
+            "accuracy_within_category": 0.16666666666666666,
+            "f1": 0.25
+          },
+          "effective_date": {
+            "support": 6,
+            "precision": 0.45454545454545453,
+            "recall": 0.8333333333333334,
+            "accuracy_within_category": 0.8333333333333334,
+            "f1": 0.5882352941176471
+          },
+          "exclusivity": {
+            "support": 6,
+            "precision": 0,
+            "recall": 0,
+            "accuracy_within_category": 0,
+            "f1": 0
+          },
+          "expiration_date": {
+            "support": 6,
+            "precision": 0.5714285714285714,
+            "recall": 0.6666666666666666,
+            "accuracy_within_category": 0.6666666666666666,
+            "f1": 0.6153846153846153
+          },
+          "governing_law": {
+            "support": 6,
+            "precision": 1,
+            "recall": 1,
+            "accuracy_within_category": 1,
+            "f1": 1
+          },
+          "insurance": {
+            "support": 6,
+            "precision": 1,
+            "recall": 0.6666666666666666,
+            "accuracy_within_category": 0.6666666666666666,
+            "f1": 0.8
+          },
+          "ip_ownership_assignment": {
+            "support": 6,
+            "precision": 0.6,
+            "recall": 0.5,
+            "accuracy_within_category": 0.5,
+            "f1": 0.5454545454545454
+          },
+          "irrevocable_or_perpetual_license": {
+            "support": 1,
+            "precision": 0,
+            "recall": 0,
+            "accuracy_within_category": 0,
+            "f1": 0
+          },
+          "joint_ip_ownership": {
+            "support": 6,
+            "precision": 0.6666666666666666,
+            "recall": 1,
+            "accuracy_within_category": 1,
+            "f1": 0.8
+          },
+          "license_grant": {
+            "support": 6,
+            "precision": 0.3333333333333333,
+            "recall": 0.8333333333333334,
+            "accuracy_within_category": 0.8333333333333334,
+            "f1": 0.47619047619047616
+          },
+          "liquidated_damages": {
+            "support": 6,
+            "precision": 0.4444444444444444,
+            "recall": 0.6666666666666666,
+            "accuracy_within_category": 0.6666666666666666,
+            "f1": 0.5333333333333333
+          },
+          "minimum_commitment": {
+            "support": 6,
+            "precision": 1,
+            "recall": 0.5,
+            "accuracy_within_category": 0.5,
+            "f1": 0.6666666666666666
+          },
+          "most_favored_nation": {
+            "support": 6,
+            "precision": 0.5,
+            "recall": 0.16666666666666666,
+            "accuracy_within_category": 0.16666666666666666,
+            "f1": 0.25
+          },
+          "no_solicit_of_customers": {
+            "support": 3,
+            "precision": 0,
+            "recall": 0,
+            "accuracy_within_category": 0,
+            "f1": 0
+          },
+          "no_solicit_of_employees": {
+            "support": 6,
+            "precision": 1,
+            "recall": 0.3333333333333333,
+            "accuracy_within_category": 0.3333333333333333,
+            "f1": 0.5
+          },
+          "non_compete": {
+            "support": 6,
+            "precision": 0.6666666666666666,
+            "recall": 0.3333333333333333,
+            "accuracy_within_category": 0.3333333333333333,
+            "f1": 0.4444444444444444
+          },
+          "non_disparagement": {
+            "support": 5,
+            "precision": 0.6,
+            "recall": 0.6,
+            "accuracy_within_category": 0.6,
+            "f1": 0.6
+          },
+          "non_transferable_license": {
+            "support": 5,
+            "precision": 0.25,
+            "recall": 0.4,
+            "accuracy_within_category": 0.4,
+            "f1": 0.3076923076923077
+          },
+          "notice_period_to_terminate_renewal": {
+            "support": 1,
+            "precision": 0,
+            "recall": 0,
+            "accuracy_within_category": 0,
+            "f1": 0
+          },
+          "parties": {
+            "support": 5,
+            "precision": 1,
+            "recall": 1,
+            "accuracy_within_category": 1,
+            "f1": 1
+          },
+          "post_termination_services": {
+            "support": 5,
+            "precision": 0,
+            "recall": 0,
+            "accuracy_within_category": 0,
+            "f1": 0
+          },
+          "price_restrictions": {
+            "support": 5,
+            "precision": 0.5,
+            "recall": 0.2,
+            "accuracy_within_category": 0.2,
+            "f1": 0.28571428571428575
+          },
+          "renewal_term": {
+            "support": 5,
+            "precision": 0.5,
+            "recall": 0.2,
+            "accuracy_within_category": 0.2,
+            "f1": 0.28571428571428575
+          },
+          "revenue_profit_sharing": {
+            "support": 5,
+            "precision": 0,
+            "recall": 0,
+            "accuracy_within_category": 0,
+            "f1": 0
+          },
+          "rofr_rofo_rofn": {
+            "support": 5,
+            "precision": 0,
+            "recall": 0,
+            "accuracy_within_category": 0,
+            "f1": 0
+          },
+          "source_code_escrow": {
+            "support": 4,
+            "precision": 0.6666666666666666,
+            "recall": 1,
+            "accuracy_within_category": 1,
+            "f1": 0.8
+          },
+          "termination_for_convenience": {
+            "support": 5,
+            "precision": 0.5,
+            "recall": 0.8,
+            "accuracy_within_category": 0.8,
+            "f1": 0.6153846153846154
+          },
+          "third_party_beneficiary": {
+            "support": 2,
+            "precision": 0.6666666666666666,
+            "recall": 1,
+            "accuracy_within_category": 1,
+            "f1": 0.8
+          },
+          "uncapped_liability": {
+            "support": 5,
+            "precision": 0.23076923076923078,
+            "recall": 0.6,
+            "accuracy_within_category": 0.6,
+            "f1": 0.33333333333333337
+          },
+          "unlimited_all_you_can_eat_license": {
+            "support": 1,
+            "precision": 0,
+            "recall": 0,
+            "accuracy_within_category": 0,
+            "f1": 0
+          },
+          "volume_restriction": {
+            "support": 5,
+            "precision": 0.25,
+            "recall": 0.2,
+            "accuracy_within_category": 0.2,
+            "f1": 0.22222222222222224
+          },
+          "warranty_duration": {
+            "support": 5,
+            "precision": 0.75,
+            "recall": 0.6,
+            "accuracy_within_category": 0.6,
+            "f1": 0.6666666666666665
+          }
+        }
+      },
+      "completed_requests": 200,
+      "duration_seconds": 145.56380060399988,
+      "latency_median_seconds": 0.7019140389998029,
+      "latency_p95_seconds": 0.891778592999799,
+      "throughput_clauses_per_second": 1.373967972601179,
+      "input_tokens": 510320,
+      "output_tokens": 970,
+      "estimated_cost_usd": 0,
+      "cost_per_1000_clauses_usd": 0,
+      "pricing": {
+        "input_usd_per_million": 0,
+        "output_usd_per_million": 0,
+        "source": "Free Colab inference: zero API token charge; not a hardware cost measurement"
+      },
+      "server_peak_memory_bytes": null,
+      "server_memory_note": "Measure on inference host; client RSS is not model memory.",
+      "records_sha256": "a39ac05fa9bedf050645e159ef7fc44ee9c094386bad2b732e25cd762deb8793",
+      "model_provenance": {
+        "base_model": "Qwen/Qwen2.5-1.5B-Instruct",
+        "base_revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+        "experiment": "25-step validation-only pilot; 64 unique training clauses, 400 example passes; not final model",
+        "adapter_sha256": {
+          "README.md": "94e2d5b1b97dfc3d275c352836ed3504ec3c59c4d3a03333f3ef202a4e3a2e88",
+          "adapter_config.json": "884b9574e856f023b00a3c5a08044bd724f3deba57a2e61e1dc6ba8643427500",
+          "adapter_model.safetensors": "2a93cec21c4b2695108514f709fe5c298b64a27606900bfce98d5c4721aed211"
+        },
+        "training_runtime_seconds": 1433.269995263,
+        "gpu": "Free Colab Tesla T4",
+        "inference_gpu_memory_snapshot_mib": 3583,
+        "memory_note": "Whole-GPU nvidia-smi snapshot during inference, not peak or isolated model memory."
+      }
+    },
+    {
+      "schema_version": 1,
+      "evidence_type": "real_model_requests",
+      "model": "qwen15b-q4-plus-trained-lora",
+      "model_role": "quantized",
+      "created_at": "2026-11-18T20:03:18.852659+00:00",
+      "benchmark_sha256": "087c64082dc9ca2089d272650d5072000692222451a39057a083e541eaceb8d8",
+      "prompt_version": "cuad-classification-id-v3-taxonomy",
+      "metrics": {
+        "sample_size": 200,
+        "accuracy": 0.41,
+        "macro_f1_all_categories": 0.3860102953001088,
+        "macro_f1_supported_categories": 0.3956605526826115,
+        "weighted_f1": 0.3968256302521009,
+        "invalid_output_rate": 0.13,
+        "request_error_rate": 0.0,
+        "per_category": {
+          "affiliate_license_licensee": {
+            "support": 2,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "affiliate_license_licensor": {
+            "support": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": null,
+            "f1": 0.0
+          },
+          "agreement_date": {
+            "support": 6,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "anti_assignment": {
+            "support": 6,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "audit_rights": {
+            "support": 6,
+            "precision": 1.0,
+            "recall": 0.6666666666666666,
+            "accuracy_within_category": 0.6666666666666666,
+            "f1": 0.8
+          },
+          "cap_on_liability": {
+            "support": 6,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "change_of_control": {
+            "support": 6,
+            "precision": 0.42857142857142855,
+            "recall": 0.5,
+            "accuracy_within_category": 0.5,
+            "f1": 0.4615384615384615
+          },
+          "competitive_restriction_exception": {
+            "support": 6,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "covenant_not_to_sue": {
+            "support": 6,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "document_name": {
+            "support": 6,
+            "precision": 1.0,
+            "recall": 0.16666666666666666,
+            "accuracy_within_category": 0.16666666666666666,
+            "f1": 0.2857142857142857
+          },
+          "effective_date": {
+            "support": 6,
+            "precision": 0.45454545454545453,
+            "recall": 0.8333333333333334,
+            "accuracy_within_category": 0.8333333333333334,
+            "f1": 0.5882352941176471
+          },
+          "exclusivity": {
+            "support": 6,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "expiration_date": {
+            "support": 6,
+            "precision": 0.5714285714285714,
+            "recall": 0.6666666666666666,
+            "accuracy_within_category": 0.6666666666666666,
+            "f1": 0.6153846153846153
+          },
+          "governing_law": {
+            "support": 6,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 1.0
+          },
+          "insurance": {
+            "support": 6,
+            "precision": 1.0,
+            "recall": 0.6666666666666666,
+            "accuracy_within_category": 0.6666666666666666,
+            "f1": 0.8
+          },
+          "ip_ownership_assignment": {
+            "support": 6,
+            "precision": 0.5,
+            "recall": 0.3333333333333333,
+            "accuracy_within_category": 0.3333333333333333,
+            "f1": 0.4
+          },
+          "irrevocable_or_perpetual_license": {
+            "support": 1,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 1.0
+          },
+          "joint_ip_ownership": {
+            "support": 6,
+            "precision": 0.75,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 0.8571428571428571
+          },
+          "license_grant": {
+            "support": 6,
+            "precision": 0.3333333333333333,
+            "recall": 0.5,
+            "accuracy_within_category": 0.5,
+            "f1": 0.4
+          },
+          "liquidated_damages": {
+            "support": 6,
+            "precision": 0.5,
+            "recall": 0.8333333333333334,
+            "accuracy_within_category": 0.8333333333333334,
+            "f1": 0.625
+          },
+          "minimum_commitment": {
+            "support": 6,
+            "precision": 1.0,
+            "recall": 0.6666666666666666,
+            "accuracy_within_category": 0.6666666666666666,
+            "f1": 0.8
+          },
+          "most_favored_nation": {
+            "support": 6,
+            "precision": 0.25,
+            "recall": 0.16666666666666666,
+            "accuracy_within_category": 0.16666666666666666,
+            "f1": 0.2
+          },
+          "no_solicit_of_customers": {
+            "support": 3,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "no_solicit_of_employees": {
+            "support": 6,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "non_compete": {
+            "support": 6,
+            "precision": 0.5,
+            "recall": 0.3333333333333333,
+            "accuracy_within_category": 0.3333333333333333,
+            "f1": 0.4
+          },
+          "non_disparagement": {
+            "support": 5,
+            "precision": 0.6,
+            "recall": 0.6,
+            "accuracy_within_category": 0.6,
+            "f1": 0.6
+          },
+          "non_transferable_license": {
+            "support": 5,
+            "precision": 0.19047619047619047,
+            "recall": 0.8,
+            "accuracy_within_category": 0.8,
+            "f1": 0.3076923076923077
+          },
+          "notice_period_to_terminate_renewal": {
+            "support": 1,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "parties": {
+            "support": 5,
+            "precision": 0.6666666666666666,
+            "recall": 0.8,
+            "accuracy_within_category": 0.8,
+            "f1": 0.7272727272727272
+          },
+          "post_termination_services": {
+            "support": 5,
+            "precision": 0.5,
+            "recall": 0.2,
+            "accuracy_within_category": 0.2,
+            "f1": 0.28571428571428575
+          },
+          "price_restrictions": {
+            "support": 5,
+            "precision": 1.0,
+            "recall": 0.2,
+            "accuracy_within_category": 0.2,
+            "f1": 0.33333333333333337
+          },
+          "renewal_term": {
+            "support": 5,
+            "precision": 0.75,
+            "recall": 0.6,
+            "accuracy_within_category": 0.6,
+            "f1": 0.6666666666666665
+          },
+          "revenue_profit_sharing": {
+            "support": 5,
+            "precision": 1.0,
+            "recall": 0.2,
+            "accuracy_within_category": 0.2,
+            "f1": 0.33333333333333337
+          },
+          "rofr_rofo_rofn": {
+            "support": 5,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "source_code_escrow": {
+            "support": 4,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 1.0
+          },
+          "termination_for_convenience": {
+            "support": 5,
+            "precision": 0.75,
+            "recall": 0.6,
+            "accuracy_within_category": 0.6,
+            "f1": 0.6666666666666665
+          },
+          "third_party_beneficiary": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 1.0
+          },
+          "uncapped_liability": {
+            "support": 5,
+            "precision": 0.17647058823529413,
+            "recall": 0.6,
+            "accuracy_within_category": 0.6,
+            "f1": 0.2727272727272727
+          },
+          "unlimited_all_you_can_eat_license": {
+            "support": 1,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "volume_restriction": {
+            "support": 5,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "warranty_duration": {
+            "support": 5,
+            "precision": 0.4,
+            "recall": 0.4,
+            "accuracy_within_category": 0.4,
+            "f1": 0.4000000000000001
+          }
+        }
+      },
+      "completed_requests": 200,
+      "duration_seconds": 463.836587999991,
+      "latency_median_seconds": 1.0815130999981193,
+      "latency_p95_seconds": 1.9310996999993222,
+      "throughput_clauses_per_second": 0.4311863384093449,
+      "input_tokens": 510320,
+      "output_tokens": 944,
+      "estimated_cost_usd": 0.0,
+      "cost_per_1000_clauses_usd": 0.0,
+      "pricing": {
+        "input_usd_per_million": 0.0,
+        "output_usd_per_million": 0.0,
+        "source": "Local CPU inference: zero API token charge; excludes hardware and electricity"
+      },
+      "server_peak_memory_bytes": 1889509376,
+      "server_memory_note": "Windows process peak working set, including load and synthetic warmup; not isolated model memory.",
+      "records_sha256": "79e602f929a386ae40030710fe112d5bc0c95f08941f14ced7cf2045b99f3b70",
+      "model_provenance": {
+        "mode": "Q4_K_M base plus F16 GGUF LoRA",
+        "model_sha256": "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e",
+        "model_size_bytes": 1117320736,
+        "runtime": "Official llama.cpp b12494 Windows CPU",
+        "threads": 4,
+        "prompt_rendering": "Flat training prompt through an explicit Jinja template; no chat wrapper",
+        "experiment": "Locked 25-step / 64-unique-clause training pilot; not final model release",
+        "adapter_gguf_sha256": "e60c991d247dd2faaca8e1142a4ba34301be2972295c8ebe472b20c871aece83",
+        "adapter_gguf_size_bytes": 4373888,
+        "adapter_training_base_revision": "989aa7980e4cf806f80c7fef2b1adb7bc71aa306",
+        "base_gguf_publisher_revision": "91cad51170dc346986eccefdc2dd33a9da36ead9"
+      },
+      "synthetic_warmup": {
+        "text": "governing_law",
+        "input_tokens": 2503,
+        "output_tokens": 6,
+        "response_model": "qwen15b-q4-plus-trained-lora",
+        "duration_seconds": 18.447836799998186
+      },
+      "latency_max_seconds": 221.32118870000704,
+      "requests_over_10_seconds": 2,
+      "measurement_note": "All client timings retained, including two requests over 10 seconds. No outlier trimming. Hardware, precision, chat formatting and prefix caching differ across backends; timings are descriptive, not a controlled speedup claim."
+    }
+  ],
+  "api_attempt": {
+    "status": "incomplete",
+    "planned_requests": 200,
+    "attempted_requests": 73,
+    "request_errors": 5,
+    "reason": "Stopped after three consecutive Google HTTP 503 service errors. Partial metrics are not a completed benchmark comparison.",
+    "report": {
+      "schema_version": 1,
+      "evidence_type": "real_model_requests",
+      "model": "gemini-3.5-flash-lite",
+      "model_role": "api-zero-shot",
+      "created_at": "2026-11-19T05:27:14.063746+00:00",
+      "benchmark_sha256": "087c64082dc9ca2089d272650d5072000692222451a39057a083e541eaceb8d8",
+      "prompt_version": "cuad-classification-id-v3-taxonomy",
+      "metrics": {
+        "sample_size": 73,
+        "accuracy": 0.7534246575342466,
+        "macro_f1_all_categories": 0.718931475029036,
+        "macro_f1_supported_categories": 0.736904761904762,
+        "weighted_f1": 0.7527723418134377,
+        "invalid_output_rate": 0.0684931506849315,
+        "request_error_rate": 0.0684931506849315,
+        "per_category": {
+          "affiliate_license_licensee": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 0.5,
+            "accuracy_within_category": 0.5,
+            "f1": 0.6666666666666666
+          },
+          "affiliate_license_licensor": {
+            "support": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": null,
+            "f1": 0.0
+          },
+          "agreement_date": {
+            "support": 2,
+            "precision": 0.6666666666666666,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 0.8
+          },
+          "anti_assignment": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 1.0
+          },
+          "audit_rights": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 1.0
+          },
+          "cap_on_liability": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 1.0
+          },
+          "change_of_control": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 0.5,
+            "accuracy_within_category": 0.5,
+            "f1": 0.6666666666666666
+          },
+          "competitive_restriction_exception": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 1.0
+          },
+          "covenant_not_to_sue": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 1.0
+          },
+          "document_name": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 1.0
+          },
+          "effective_date": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 0.5,
+            "accuracy_within_category": 0.5,
+            "f1": 0.6666666666666666
+          },
+          "exclusivity": {
+            "support": 2,
+            "precision": 0.4,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 0.5714285714285715
+          },
+          "expiration_date": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 1.0
+          },
+          "governing_law": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 1.0
+          },
+          "insurance": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 1.0
+          },
+          "ip_ownership_assignment": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 1.0
+          },
+          "irrevocable_or_perpetual_license": {
+            "support": 1,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 1.0
+          },
+          "joint_ip_ownership": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 1.0
+          },
+          "license_grant": {
+            "support": 2,
+            "precision": 0.4,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 0.5714285714285715
+          },
+          "liquidated_damages": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 1.0
+          },
+          "minimum_commitment": {
+            "support": 2,
+            "precision": 0.6666666666666666,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 0.8
+          },
+          "most_favored_nation": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 0.5,
+            "accuracy_within_category": 0.5,
+            "f1": 0.6666666666666666
+          },
+          "no_solicit_of_customers": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 0.5,
+            "accuracy_within_category": 0.5,
+            "f1": 0.6666666666666666
+          },
+          "no_solicit_of_employees": {
+            "support": 2,
+            "precision": 0.6666666666666666,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 0.8
+          },
+          "non_compete": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 0.5,
+            "accuracy_within_category": 0.5,
+            "f1": 0.6666666666666666
+          },
+          "non_disparagement": {
+            "support": 2,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "non_transferable_license": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 0.5,
+            "accuracy_within_category": 0.5,
+            "f1": 0.6666666666666666
+          },
+          "notice_period_to_terminate_renewal": {
+            "support": 1,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "parties": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 1.0
+          },
+          "post_termination_services": {
+            "support": 2,
+            "precision": 0.6666666666666666,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 0.8
+          },
+          "price_restrictions": {
+            "support": 2,
+            "precision": 0.6666666666666666,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 0.8
+          },
+          "renewal_term": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 0.5,
+            "accuracy_within_category": 0.5,
+            "f1": 0.6666666666666666
+          },
+          "revenue_profit_sharing": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 0.5,
+            "accuracy_within_category": 0.5,
+            "f1": 0.6666666666666666
+          },
+          "rofr_rofo_rofn": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 0.5,
+            "accuracy_within_category": 0.5,
+            "f1": 0.6666666666666666
+          },
+          "source_code_escrow": {
+            "support": 2,
+            "precision": 1.0,
+            "recall": 0.5,
+            "accuracy_within_category": 0.5,
+            "f1": 0.6666666666666666
+          },
+          "termination_for_convenience": {
+            "support": 2,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "third_party_beneficiary": {
+            "support": 1,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 1.0
+          },
+          "uncapped_liability": {
+            "support": 1,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 1.0
+          },
+          "unlimited_all_you_can_eat_license": {
+            "support": 1,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "volume_restriction": {
+            "support": 1,
+            "precision": 0.0,
+            "recall": 0.0,
+            "accuracy_within_category": 0.0,
+            "f1": 0.0
+          },
+          "warranty_duration": {
+            "support": 1,
+            "precision": 1.0,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 1.0
+          }
+        }
+      },
+      "completed_requests": 73,
+      "planned_requests": 200,
+      "status": "incomplete",
+      "request_interval_seconds": 4.5,
+      "resumed_from_records_sha256": "c74c44137449fd0d3801a7f1e9a58d4c3bb2e069f324bcc78b2c880ba551d89c",
+      "duration_note": "Sum of active run segments, excluding downtime between resumes",
+      "duration_seconds": 475.1759962999786,
+      "latency_median_seconds": 1.9927736999816261,
+      "latency_p95_seconds": 10.597662899992429,
+      "throughput_clauses_per_second": 0.15362728876968587,
+      "input_tokens": null,
+      "output_tokens": null,
+      "estimated_cost_usd": null,
+      "cost_per_1000_clauses_usd": null,
+      "pricing": {
+        "input_usd_per_million": 0.0,
+        "output_usd_per_million": 0.0,
+        "source": "https://aistudio.google.com/docs/pricing"
+      },
+      "server_peak_memory_bytes": null,
+      "server_memory_note": "Measure on inference host; client RSS is not model memory.",
+      "records_sha256": "8ebc73592ea0245f5b5c18536bf1722e3cacf363a69b3c9aec7aafe79be3dcdb"
+    }
+  }
+}

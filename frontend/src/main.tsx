@@ -1,7 +1,8 @@
+import { RecordedRuns } from "./recorded-runs";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
-  BrowserRouter,
+  HashRouter,
   Link,
   Navigate,
   Route,
@@ -41,14 +42,14 @@ function useList(client: ApiClient, filters: IncidentFilters) {
 
 export function Login({ connect, message }: { connect: (value: string) => void; message: string }) {
   const [token, setToken] = useState("");
-  return <main className="login-page"><section className="login-card"><p className="eyebrow">INCIDENT RESPONSE</p><h1>IncidentPilot</h1><h2>Operator Console</h2><p className="muted">Connect with an existing operator bearer token.</p>{message && <p className="login-error" role="alert">{message}</p>}<form onSubmit={(event) => { event.preventDefault(); if (token.trim()) connect(token.trim()); }}><label htmlFor="token">Bearer Token<input id="token" type="password" autoComplete="off" value={token} onChange={(event) => setToken(event.target.value)} /></label><button type="submit" disabled={!token.trim()}>Connect</button></form></section></main>;
+  return <main className="login-page"><section className="login-card"><p className="eyebrow">INCIDENT RESPONSE</p><h1>IncidentPilot</h1><h2>Operator Console</h2><p className="muted">Public demo: synthetic incidents and simulated evidence. Decisions stay in this browser session.</p>{message && <p className="login-error" role="alert">{message}</p>}<button type="button" onClick={() => connect("public-demo")}>Explore demo</button><p className="muted">Use the sample workspace; no account or credentials are needed.</p><form hidden onSubmit={(event) => { event.preventDefault(); if (token.trim()) connect(token.trim()); }}><label htmlFor="token">Bearer Token<input id="token" type="password" autoComplete="off" value={token} onChange={(event) => setToken(event.target.value)} /></label><button type="submit" disabled={!token.trim()}>Connect</button></form></section></main>;
 }
 
 export function Dashboard({ client, setConnected }: { client: ApiClient; setConnected: (value: boolean) => void }) {
   const filters = useMemo(() => ({ limit: 5, offset: 0 }), []);
   const { data, error, reload } = useList(client, filters);
   useEffect(() => { if (data) setConnected(true); if (error) setConnected(false); }, [data, error, setConnected]);
-  return <section className="page"><div className="page-title"><div><p className="eyebrow">OPERATOR OVERVIEW</p><h1>Dashboard</h1><p className="muted">Recent persisted incidents from the visible API page.</p></div></div><div className="card"><div className="card-title"><h2>Recent incidents</h2>{data && <span>Visible incidents: {data.items.length}</span>}</div>{error ? <ErrorView error={error} retry={reload} /> : !data ? <Loading /> : data.items.length === 0 ? <Empty label="No incidents are available on this page." /> : <IncidentTable items={data.items} />}</div></section>;
+  return <section className="page"><div className="page-title"><div><p className="eyebrow">OPERATOR OVERVIEW</p><h1>Dashboard</h1><p className="muted">Synthetic sample incidents. No live systems or AI providers are connected.</p></div></div><RecordedRuns /><div className="card"><div className="card-title"><h2>Recent incidents</h2>{data && <span>Visible incidents: {data.items.length}</span>}</div>{error ? <ErrorView error={error} retry={reload} /> : !data ? <Loading /> : data.items.length === 0 ? <Empty label="No incidents are available on this page." /> : <IncidentTable items={data.items} />}</div></section>;
 }
 
 export function Incidents({ client, setConnected }: { client: ApiClient; setConnected: (value: boolean) => void }) {
@@ -56,7 +57,7 @@ export function Incidents({ client, setConnected }: { client: ApiClient; setConn
   const { data, error, reload } = useList(client, filters);
   useEffect(() => { if (data) setConnected(true); if (error) setConnected(false); }, [data, error, setConnected]);
   const change = (name: "status" | "severity" | "affected_service", value: string) => setFilters((current) => ({ ...current, [name]: value || undefined, offset: 0 }));
-  return <section className="page"><div className="page-title"><div><p className="eyebrow">INCIDENT QUEUE</p><h1>Incidents</h1><p className="muted">Server-side filtering and pagination.</p></div></div><div className="filter-bar"><label>Status<select aria-label="Status filter" value={filters.status ?? ""} onChange={(event) => change("status", event.target.value)}><option value="">All statuses</option>{["open", "investigating", "diagnosed", "proposal_ready", "approved", "investigation_failed", "closed"].map((value) => <option key={value}>{value}</option>)}</select></label><label>Severity<select aria-label="Severity filter" value={filters.severity ?? ""} onChange={(event) => change("severity", event.target.value)}><option value="">All severities</option>{["low", "medium", "high", "critical"].map((value) => <option key={value}>{value}</option>)}</select></label><label>Affected service<input aria-label="Affected service filter" value={filters.affected_service ?? ""} placeholder="e.g. gateway" onChange={(event) => change("affected_service", event.target.value)} /></label></div><div className="card">{error ? <ErrorView error={error} retry={reload} /> : !data ? <Loading /> : data.items.length === 0 ? <Empty label="No incidents match these filters." /> : <><IncidentTable items={data.items} /><div className="pagination"><span>Offset {data.offset}</span><div><button className="quiet" disabled={data.offset === 0} onClick={() => setFilters((current) => ({ ...current, offset: Math.max(0, (current.offset ?? 0) - (current.limit ?? 10)) }))}>Previous</button><button disabled={data.next_offset === null} onClick={() => setFilters((current) => ({ ...current, offset: data.next_offset ?? current.offset }))}>Next</button></div></div></>}</div></section>;
+  return <section className="page"><div className="page-title"><div><p className="eyebrow">INCIDENT QUEUE</p><h1>Incidents</h1><p className="muted">Explore sample incidents with browser-local filtering and pagination.</p></div></div><div className="filter-bar"><label>Status<select aria-label="Status filter" value={filters.status ?? ""} onChange={(event) => change("status", event.target.value)}><option value="">All statuses</option>{["open", "investigating", "diagnosed", "proposal_ready", "approved", "investigation_failed", "closed"].map((value) => <option key={value}>{value}</option>)}</select></label><label>Severity<select aria-label="Severity filter" value={filters.severity ?? ""} onChange={(event) => change("severity", event.target.value)}><option value="">All severities</option>{["low", "medium", "high", "critical"].map((value) => <option key={value}>{value}</option>)}</select></label><label>Affected service<input aria-label="Affected service filter" value={filters.affected_service ?? ""} placeholder="e.g. gateway" onChange={(event) => change("affected_service", event.target.value)} /></label></div><div className="card">{error ? <ErrorView error={error} retry={reload} /> : !data ? <Loading /> : data.items.length === 0 ? <Empty label="No incidents match these filters." /> : <><IncidentTable items={data.items} /><div className="pagination"><span>Offset {data.offset}</span><div><button className="quiet" disabled={data.offset === 0} onClick={() => setFilters((current) => ({ ...current, offset: Math.max(0, (current.offset ?? 0) - (current.limit ?? 10)) }))}>Previous</button><button disabled={data.next_offset === null} onClick={() => setFilters((current) => ({ ...current, offset: data.next_offset ?? current.offset }))}>Next</button></div></div></>}</div></section>;
 }
 
 export function Detail({ client, setConnected, role }: { client: ApiClient; setConnected: (value: boolean) => void; role: Session["role"] | null }) {
@@ -71,7 +72,7 @@ export function Detail({ client, setConnected, role }: { client: ApiClient; setC
 }
 
 function Shell({ children, connected, signOut, role }: { children: React.ReactNode; connected: boolean; signOut: () => void; role: string | null }) {
-  return <div className="shell"><aside><Link className="brand" to="/dashboard">IncidentPilot<span>OPERATOR CONSOLE</span></Link><nav><Link to="/dashboard">Dashboard</Link><Link to="/incidents">Incidents</Link></nav></aside><main><header><span className={`connection ${connected ? "online" : "offline"}`}><i />API {connected ? "Connected" : "Unavailable"}</span>{role && <span className="role">{role}</span>}<span className="environment">{deploymentLabel}</span><button className="quiet" onClick={signOut}>Sign out</button></header>{children}</main></div>;
+  return <div className="shell"><aside><Link className="brand" to="/dashboard">IncidentPilot<span>OPERATOR CONSOLE</span></Link><nav><Link to="/dashboard">Dashboard</Link><Link to="/incidents">Incidents</Link></nav></aside><main><header><span className={`connection ${connected ? "online" : "offline"}`}><i />API {connected ? "Connected" : "Unavailable"}</span>{role && <span className="role">{role}</span>}<span className="environment">{deploymentLabel}</span><button className="quiet" onClick={signOut}>Sign out</button></header><p className="warning" style={{padding:"12px 24px"}}>DEMO — synthetic incidents, simulated AI and evidence. Decisions remain in this browser session; no remediation is executed.</p>{children}</main></div>;
 }
 
 export function Console() {
@@ -88,5 +89,5 @@ export function Console() {
   return <Shell connected={connected} signOut={() => signOut()} role={identity?.role ?? null}><Routes><Route path="/dashboard" element={<Dashboard client={client} setConnected={setConnected} />} /><Route path="/incidents" element={<Incidents client={client} setConnected={setConnected} />} /><Route path="/incidents/:incidentId" element={<Detail client={client} setConnected={setConnected} role={identity?.role ?? null} />} /><Route path="*" element={<Navigate to="/dashboard" replace />} /></Routes></Shell>;
 }
 
-export function App() { return <BrowserRouter><Console /></BrowserRouter>; }
+export function App() { return <HashRouter><Console /></HashRouter>; }
 if (import.meta.env.MODE !== "test") createRoot(document.getElementById("root")!).render(<App />);

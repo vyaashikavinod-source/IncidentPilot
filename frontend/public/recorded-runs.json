@@ -1,0 +1,719 @@
+{
+  "schema_version": 1,
+  "evidence_type": "real_loopback_http_faults",
+  "agent_type": "real_model",
+  "model": "qwen2.5-1.5b-instruct-q4-k-m",
+  "seed": 42,
+  "sample_size": 9,
+  "accuracy": 0.3333333333333333,
+  "faults_verified": 9,
+  "recoveries_verified": 9,
+  "median_time_to_diagnosis_seconds": 8.156424100001459,
+  "input_tokens": 3280,
+  "output_tokens": 977,
+  "estimated_cost_usd": 0.0,
+  "pricing": {
+    "input_usd_per_million": 0.0,
+    "output_usd_per_million": 0.0
+  },
+  "runs": [
+    {
+      "run_id": "1b1167fc-a866-4516-a2c4-98db02f42a5e",
+      "recorded_at": "2026-11-18T03:10:47.762104+00:00",
+      "fault": "bad_config",
+      "expected_service": "gateway",
+      "fault_verified": true,
+      "http_statuses": [
+        503,
+        503,
+        503,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.018377400003373623,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "pool_exhaustion",
+        "affected_service": "gateway",
+        "explanation": "The gateway is experiencing an HTTP error spike due to pool exhaustion. The pool is not being used efficiently, leading to a high number of errors.",
+        "proposed_fix": "Increase the request limit to allow more requests to be processed at once.",
+        "evidence_ids": [
+          "e1"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 0,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.0036774199979845434,
+            "request_limit": 0
+          }
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "pool_exhaustion",
+            "affected_service": "gateway",
+            "explanation": "The gateway is experiencing an HTTP error spike due to pool exhaustion. The pool is not being used efficiently, leading to a high number of errors.",
+            "proposed_fix": "Increase the request limit to allow more requests to be processed at once.",
+            "evidence_ids": [
+              "e1"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": false,
+      "time_to_diagnosis_seconds": 8.069429800001672,
+      "input_tokens": 364,
+      "output_tokens": 101,
+      "estimated_cost_usd": 0.0,
+      "fix_executed": false
+    },
+    {
+      "run_id": "05b29668-911d-447e-a85c-003c277fb47b",
+      "recorded_at": "2026-11-18T03:10:56.467144+00:00",
+      "fault": "bad_config",
+      "expected_service": "gateway",
+      "fault_verified": true,
+      "http_statuses": [
+        503,
+        503,
+        503,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.004067999994731508,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "pool_exhaustion",
+        "affected_service": "gateway",
+        "explanation": "The gateway is experiencing an HTTP error spike due to pool exhaustion. The pool is currently at its limit, which is causing requests to be queued and eventually timed out.",
+        "proposed_fix": "Increase the request limit or implement a load balancer to distribute the load more evenly.",
+        "evidence_ids": [
+          "e1"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 0,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.0008154600014677271,
+            "request_limit": 0
+          }
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "pool_exhaustion",
+            "affected_service": "gateway",
+            "explanation": "The gateway is experiencing an HTTP error spike due to pool exhaustion. The pool is currently at its limit, which is causing requests to be queued and eventually timed out.",
+            "proposed_fix": "Increase the request limit or implement a load balancer to distribute the load more evenly.",
+            "evidence_ids": [
+              "e1"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": false,
+      "time_to_diagnosis_seconds": 7.679663599992637,
+      "input_tokens": 364,
+      "output_tokens": 108,
+      "estimated_cost_usd": 0.0,
+      "fix_executed": false
+    },
+    {
+      "run_id": "2904d7f9-5a79-4e40-8d9a-9f0564712be9",
+      "recorded_at": "2026-11-18T03:11:05.760194+00:00",
+      "fault": "pool_exhaustion",
+      "expected_service": "gateway",
+      "fault_verified": true,
+      "http_statuses": [
+        503,
+        503,
+        503,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.004293799996958114,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "pool_exhaustion",
+        "affected_service": "gateway",
+        "explanation": "The gateway is experiencing a spike in errors due to pool exhaustion. The pool is limited to 100 requests, and there are currently 5 requests in the pool, with 4 errors and 4 timeouts.",
+        "proposed_fix": "Increase the request limit to allow more requests to be processed at once.",
+        "evidence_ids": [
+          "e1"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 4,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.025855180001235566,
+            "request_limit": 100
+          }
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "pool_exhaustion",
+            "affected_service": "gateway",
+            "explanation": "The gateway is experiencing a spike in errors due to pool exhaustion. The pool is limited to 100 requests, and there are currently 5 requests in the pool, with 4 errors and 4 timeouts.",
+            "proposed_fix": "Increase the request limit to allow more requests to be processed at once.",
+            "evidence_ids": [
+              "e1"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": true,
+      "time_to_diagnosis_seconds": 8.267335999989882,
+      "input_tokens": 365,
+      "output_tokens": 116,
+      "estimated_cost_usd": 0.0,
+      "fix_executed": false
+    },
+    {
+      "run_id": "e12a26f5-92c3-41f0-949d-ff40b34089b7",
+      "recorded_at": "2026-11-18T03:11:14.581152+00:00",
+      "fault": "pool_exhaustion",
+      "expected_service": "gateway",
+      "fault_verified": true,
+      "http_statuses": [
+        503,
+        503,
+        503,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.018361099995672703,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "pool_exhaustion",
+        "affected_service": "gateway",
+        "explanation": "The gateway is experiencing a spike in errors due to pool exhaustion. The pool is limited to 100 requests, and 4 errors occurred within a short period.",
+        "proposed_fix": "Increase the request limit to allow more requests to be processed at once.",
+        "evidence_ids": [
+          "e1"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 4,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.036031899999943565,
+            "request_limit": 100
+          }
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "pool_exhaustion",
+            "affected_service": "gateway",
+            "explanation": "The gateway is experiencing a spike in errors due to pool exhaustion. The pool is limited to 100 requests, and 4 errors occurred within a short period.",
+            "proposed_fix": "Increase the request limit to allow more requests to be processed at once.",
+            "evidence_ids": [
+              "e1"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": true,
+      "time_to_diagnosis_seconds": 7.780548700000509,
+      "input_tokens": 365,
+      "output_tokens": 106,
+      "estimated_cost_usd": 0.0,
+      "fix_executed": false
+    },
+    {
+      "run_id": "81627ab8-8351-4a52-9df8-be227ef5d21d",
+      "recorded_at": "2026-11-18T03:11:24.208616+00:00",
+      "fault": "slow_dependency",
+      "expected_service": "dependency",
+      "fault_verified": true,
+      "http_statuses": [
+        504,
+        504,
+        503,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.018004199999268167,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "pool_exhaustion",
+        "affected_service": "gateway",
+        "explanation": "The gateway is experiencing a spike in errors due to pool exhaustion. The pool has a limit of 100 requests, but currently, 50 requests are being processed, leading to 4 errors and 2 timeouts.",
+        "proposed_fix": "Increase the request limit to accommodate more requests.",
+        "evidence_ids": [
+          "e1"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 2,
+            "dependency_timeouts": 2,
+            "latency_mean_seconds": 0.04193847999849822,
+            "request_limit": 100
+          }
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "pool_exhaustion",
+            "affected_service": "gateway",
+            "explanation": "The gateway is experiencing a spike in errors due to pool exhaustion. The pool has a limit of 100 requests, but currently, 50 requests are being processed, leading to 4 errors and 2 timeouts.",
+            "proposed_fix": "Increase the request limit to accommodate more requests.",
+            "evidence_ids": [
+              "e1"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": false,
+      "time_to_diagnosis_seconds": 8.554070199999842,
+      "input_tokens": 364,
+      "output_tokens": 113,
+      "estimated_cost_usd": 0.0,
+      "fix_executed": false
+    },
+    {
+      "run_id": "3cfb5c07-f13f-4504-90e9-bbba79fc0b96",
+      "recorded_at": "2026-11-18T03:11:33.567056+00:00",
+      "fault": "slow_dependency",
+      "expected_service": "dependency",
+      "fault_verified": true,
+      "http_statuses": [
+        504,
+        504,
+        503,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.014950400000088848,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "pool_exhaustion",
+        "affected_service": "gateway",
+        "explanation": "The gateway is experiencing a spike in errors due to pool exhaustion. The pool has a limit of 100 requests, but currently, 50 requests are being processed, leading to 4 errors and 2 timeouts.",
+        "proposed_fix": "Increase the request limit to accommodate more requests.",
+        "evidence_ids": [
+          "e1"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 2,
+            "dependency_timeouts": 2,
+            "latency_mean_seconds": 0.042426180001348256,
+            "request_limit": 100
+          }
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "pool_exhaustion",
+            "affected_service": "gateway",
+            "explanation": "The gateway is experiencing a spike in errors due to pool exhaustion. The pool has a limit of 100 requests, but currently, 50 requests are being processed, leading to 4 errors and 2 timeouts.",
+            "proposed_fix": "Increase the request limit to accommodate more requests.",
+            "evidence_ids": [
+              "e1"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": false,
+      "time_to_diagnosis_seconds": 8.317655400009244,
+      "input_tokens": 365,
+      "output_tokens": 113,
+      "estimated_cost_usd": 0.0,
+      "fix_executed": false
+    },
+    {
+      "run_id": "984200a2-5961-4498-a805-d08013ca712e",
+      "recorded_at": "2026-11-18T03:11:42.282465+00:00",
+      "fault": "slow_dependency",
+      "expected_service": "dependency",
+      "fault_verified": true,
+      "http_statuses": [
+        504,
+        503,
+        504,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.018766799999866635,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "pool_exhaustion",
+        "affected_service": "gateway",
+        "explanation": "The gateway is experiencing a spike in errors due to pool exhaustion. The pool has a limit of 100 requests, but currently, 50 requests are being processed, leading to 4 errors and 2 timeouts.",
+        "proposed_fix": "Increase the request limit to accommodate more requests.",
+        "evidence_ids": [
+          "e1"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 2,
+            "dependency_timeouts": 2,
+            "latency_mean_seconds": 0.04507912000408396,
+            "request_limit": 100
+          }
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "pool_exhaustion",
+            "affected_service": "gateway",
+            "explanation": "The gateway is experiencing a spike in errors due to pool exhaustion. The pool has a limit of 100 requests, but currently, 50 requests are being processed, leading to 4 errors and 2 timeouts.",
+            "proposed_fix": "Increase the request limit to accommodate more requests.",
+            "evidence_ids": [
+              "e1"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": false,
+      "time_to_diagnosis_seconds": 8.156424100001459,
+      "input_tokens": 364,
+      "output_tokens": 113,
+      "estimated_cost_usd": 0.0,
+      "fix_executed": false
+    },
+    {
+      "run_id": "1897cceb-75a3-4f06-8cdd-47a489cd9f1b",
+      "recorded_at": "2026-11-18T03:11:51.773186+00:00",
+      "fault": "bad_config",
+      "expected_service": "gateway",
+      "fault_verified": true,
+      "http_statuses": [
+        503,
+        503,
+        503,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.015397800001665018,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "pool_exhaustion",
+        "affected_service": "gateway",
+        "explanation": "The gateway is experiencing an HTTP error spike due to pool exhaustion. The pool is not being used efficiently, leading to a high number of errors.",
+        "proposed_fix": "Increase the request limit to allow more requests to be processed at once.",
+        "evidence_ids": [
+          "e1"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 0,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.0030808800016529857,
+            "request_limit": 0
+          }
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "pool_exhaustion",
+            "affected_service": "gateway",
+            "explanation": "The gateway is experiencing an HTTP error spike due to pool exhaustion. The pool is not being used efficiently, leading to a high number of errors.",
+            "proposed_fix": "Increase the request limit to allow more requests to be processed at once.",
+            "evidence_ids": [
+              "e1"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": false,
+      "time_to_diagnosis_seconds": 8.459742400009418,
+      "input_tokens": 364,
+      "output_tokens": 101,
+      "estimated_cost_usd": 0.0,
+      "fix_executed": false
+    },
+    {
+      "run_id": "9dcc98fd-3ed9-43e3-8e33-84e468950172",
+      "recorded_at": "2026-11-18T03:12:00.468315+00:00",
+      "fault": "pool_exhaustion",
+      "expected_service": "gateway",
+      "fault_verified": true,
+      "http_statuses": [
+        503,
+        503,
+        503,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.018028300008154474,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "pool_exhaustion",
+        "affected_service": "gateway",
+        "explanation": "The gateway is experiencing a spike in errors due to pool exhaustion. The pool has a limit of 100 requests, but 4 errors occurred within a short period.",
+        "proposed_fix": "Increase the request limit or implement a retry mechanism to handle errors.",
+        "evidence_ids": [
+          "e1"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 4,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.035119800004758873,
+            "request_limit": 100
+          }
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "pool_exhaustion",
+            "affected_service": "gateway",
+            "explanation": "The gateway is experiencing a spike in errors due to pool exhaustion. The pool has a limit of 100 requests, but 4 errors occurred within a short period.",
+            "proposed_fix": "Increase the request limit or implement a retry mechanism to handle errors.",
+            "evidence_ids": [
+              "e1"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": true,
+      "time_to_diagnosis_seconds": 8.143074499996146,
+      "input_tokens": 365,
+      "output_tokens": 106,
+      "estimated_cost_usd": 0.0,
+      "fix_executed": false
+    }
+  ],
+  "records_sha256": "f8b681632340e736630759c70b3c06b0f29e9b594564818671fea51dc38347c8",
+  "model_provenance": {
+    "publisher": "Qwen/Qwen2.5-1.5B-Instruct-GGUF",
+    "revision": "91cad51170dc346986eccefdc2dd33a9da36ead9",
+    "model_sha256": "6a1a2eb6d15622bf3c96857206351ba97e1af16c30d7a74ee38970e434e9407e",
+    "quantization": "Q4_K_M",
+    "training_status": "public base model; no ClauseForge fine-tuning",
+    "runtime": "llama-b12494-bin-win-cpu-x64.zip",
+    "server_memory": {
+      "peak_working_set_bytes": 2080186368,
+      "working_set_bytes": 1826484224
+    },
+    "memory_note": "Shared inference-process sample after agent run, during clause evaluation; not per-request model-only memory."
+  }
+}

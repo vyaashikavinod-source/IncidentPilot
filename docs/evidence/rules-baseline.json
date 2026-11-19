@@ -1,0 +1,1120 @@
+{
+  "schema_version": 1,
+  "evidence_type": "real_loopback_http_faults",
+  "agent_type": "deterministic_rules_baseline",
+  "model": null,
+  "seed": 42,
+  "sample_size": 9,
+  "accuracy": 0.6666666666666666,
+  "faults_verified": 9,
+  "recoveries_verified": 9,
+  "median_time_to_diagnosis_seconds": 0.045330000000831205,
+  "input_tokens": 0,
+  "output_tokens": 0,
+  "estimated_cost_usd": 0,
+  "pricing": {
+    "input_usd_per_million": null,
+    "output_usd_per_million": null
+  },
+  "runs": [
+    {
+      "run_id": "ce0efe73-55bc-4615-aec4-9133b712c39b",
+      "recorded_at": "2026-11-18T02:38:12.745001+00:00",
+      "fault": "bad_config",
+      "expected_service": "gateway",
+      "fault_verified": true,
+      "http_statuses": [
+        503,
+        503,
+        503,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.004651700000977144,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "bad_config",
+        "affected_service": "gateway",
+        "explanation": "Deterministic diagnostic rule over measured service evidence.",
+        "proposed_fix": "Restore a positive request_limit after review.",
+        "evidence_ids": [
+          "e1",
+          "e2"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 0,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.0009327799984021112,
+            "request_limit": 0
+          }
+        },
+        "e2": {
+          "service": "gateway",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-18T02:38:12.722021+00:00",
+              "service": "gateway",
+              "status": 200,
+              "event": "request_ok"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:12.725233+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "request_rejected: configured request_limit=0"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:12.726085+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "request_rejected: configured request_limit=0"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:12.727088+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "request_rejected: configured request_limit=0"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:12.727933+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "request_rejected: configured request_limit=0"
+            }
+          ]
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "decision": {
+            "action": "read_logs",
+            "service": "gateway"
+          },
+          "evidence_id": "e2"
+        },
+        {
+          "turn": 3,
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "bad_config",
+            "affected_service": "gateway",
+            "explanation": "Deterministic diagnostic rule over measured service evidence.",
+            "proposed_fix": "Restore a positive request_limit after review.",
+            "evidence_ids": [
+              "e1",
+              "e2"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": true,
+      "time_to_diagnosis_seconds": 0.0068721999996341765,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "estimated_cost_usd": 0,
+      "fix_executed": false
+    },
+    {
+      "run_id": "c7510b3b-20e2-401f-9da0-e3bbe1f40452",
+      "recorded_at": "2026-11-18T02:38:13.807298+00:00",
+      "fault": "bad_config",
+      "expected_service": "gateway",
+      "fault_verified": true,
+      "http_statuses": [
+        503,
+        503,
+        503,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.01979890000075102,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "bad_config",
+        "affected_service": "gateway",
+        "explanation": "Deterministic diagnostic rule over measured service evidence.",
+        "proposed_fix": "Restore a positive request_limit after review.",
+        "evidence_ids": [
+          "e1",
+          "e2"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 0,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.00396148000145331,
+            "request_limit": 0
+          }
+        },
+        "e2": {
+          "service": "gateway",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-18T02:38:13.771103+00:00",
+              "service": "gateway",
+              "status": 200,
+              "event": "request_ok"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:13.774693+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "request_rejected: configured request_limit=0"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:13.775192+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "request_rejected: configured request_limit=0"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:13.776183+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "request_rejected: configured request_limit=0"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:13.777480+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "request_rejected: configured request_limit=0"
+            }
+          ]
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "decision": {
+            "action": "read_logs",
+            "service": "gateway"
+          },
+          "evidence_id": "e2"
+        },
+        {
+          "turn": 3,
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "bad_config",
+            "affected_service": "gateway",
+            "explanation": "Deterministic diagnostic rule over measured service evidence.",
+            "proposed_fix": "Restore a positive request_limit after review.",
+            "evidence_ids": [
+              "e1",
+              "e2"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": true,
+      "time_to_diagnosis_seconds": 0.006815599997935351,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "estimated_cost_usd": 0,
+      "fix_executed": false
+    },
+    {
+      "run_id": "1cd72416-5c91-42c7-a3ee-e188a8de2425",
+      "recorded_at": "2026-11-18T02:38:14.879831+00:00",
+      "fault": "pool_exhaustion",
+      "expected_service": "gateway",
+      "fault_verified": true,
+      "http_statuses": [
+        503,
+        503,
+        503,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.02336230000219075,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "pool_exhaustion",
+        "affected_service": "gateway",
+        "explanation": "Deterministic diagnostic rule over measured service evidence.",
+        "proposed_fix": "Inspect held connections; release leaks and size the pool after review.",
+        "evidence_ids": [
+          "e1",
+          "e2"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 4,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.03183976000000257,
+            "request_limit": 100
+          }
+        },
+        "e2": {
+          "service": "gateway",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-18T02:38:14.830056+00:00",
+              "service": "gateway",
+              "status": 200,
+              "event": "request_ok"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:14.867372+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:14.867651+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:14.867882+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:14.868107+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            }
+          ]
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "decision": {
+            "action": "read_logs",
+            "service": "gateway"
+          },
+          "evidence_id": "e2"
+        },
+        {
+          "turn": 3,
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "pool_exhaustion",
+            "affected_service": "gateway",
+            "explanation": "Deterministic diagnostic rule over measured service evidence.",
+            "proposed_fix": "Inspect held connections; release leaks and size the pool after review.",
+            "evidence_ids": [
+              "e1",
+              "e2"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": true,
+      "time_to_diagnosis_seconds": 0.04195379999873694,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "estimated_cost_usd": 0,
+      "fix_executed": false
+    },
+    {
+      "run_id": "0928cc90-4bc6-4fbf-b024-043ce434c42f",
+      "recorded_at": "2026-11-18T02:38:15.977961+00:00",
+      "fault": "pool_exhaustion",
+      "expected_service": "gateway",
+      "fault_verified": true,
+      "http_statuses": [
+        503,
+        503,
+        503,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.004823100003704894,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "pool_exhaustion",
+        "affected_service": "gateway",
+        "explanation": "Deterministic diagnostic rule over measured service evidence.",
+        "proposed_fix": "Inspect held connections; release leaks and size the pool after review.",
+        "evidence_ids": [
+          "e1",
+          "e2"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 4,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.03197886000125436,
+            "request_limit": 100
+          }
+        },
+        "e2": {
+          "service": "gateway",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-18T02:38:15.894776+00:00",
+              "service": "gateway",
+              "status": 200,
+              "event": "request_ok"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:15.937535+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:15.937935+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:15.938200+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:15.938518+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            }
+          ]
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "decision": {
+            "action": "read_logs",
+            "service": "gateway"
+          },
+          "evidence_id": "e2"
+        },
+        {
+          "turn": 3,
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "pool_exhaustion",
+            "affected_service": "gateway",
+            "explanation": "Deterministic diagnostic rule over measured service evidence.",
+            "proposed_fix": "Inspect held connections; release leaks and size the pool after review.",
+            "evidence_ids": [
+              "e1",
+              "e2"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": true,
+      "time_to_diagnosis_seconds": 0.045330000000831205,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "estimated_cost_usd": 0,
+      "fix_executed": false
+    },
+    {
+      "run_id": "c872b28a-1f0b-454e-96d7-6f5f922592a9",
+      "recorded_at": "2026-11-18T02:38:16.574845+00:00",
+      "fault": "slow_dependency",
+      "expected_service": "dependency",
+      "fault_verified": true,
+      "http_statuses": [
+        504,
+        504,
+        503,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.005015199996705633,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "pool_exhaustion",
+        "affected_service": "gateway",
+        "explanation": "Deterministic diagnostic rule over measured service evidence.",
+        "proposed_fix": "Inspect held connections; release leaks and size the pool after review.",
+        "evidence_ids": [
+          "e1",
+          "e2"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 2,
+            "dependency_timeouts": 2,
+            "latency_mean_seconds": 0.037272259997553195,
+            "request_limit": 100
+          }
+        },
+        "e2": {
+          "service": "gateway",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-18T02:38:16.493143+00:00",
+              "service": "gateway",
+              "status": 200,
+              "event": "request_ok"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:16.528619+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:16.538315+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:16.552846+00:00",
+              "service": "gateway",
+              "status": 504,
+              "event": "upstream_dependency_timeout"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:16.553079+00:00",
+              "service": "gateway",
+              "status": 504,
+              "event": "upstream_dependency_timeout"
+            }
+          ]
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "decision": {
+            "action": "read_logs",
+            "service": "gateway"
+          },
+          "evidence_id": "e2"
+        },
+        {
+          "turn": 3,
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "pool_exhaustion",
+            "affected_service": "gateway",
+            "explanation": "Deterministic diagnostic rule over measured service evidence.",
+            "proposed_fix": "Inspect held connections; release leaks and size the pool after review.",
+            "evidence_ids": [
+              "e1",
+              "e2"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": false,
+      "time_to_diagnosis_seconds": 0.061003599999821745,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "estimated_cost_usd": 0,
+      "fix_executed": false
+    },
+    {
+      "run_id": "718dd990-6d5b-44dc-bfed-cf00eebf7042",
+      "recorded_at": "2026-11-18T02:38:17.169608+00:00",
+      "fault": "slow_dependency",
+      "expected_service": "dependency",
+      "fault_verified": true,
+      "http_statuses": [
+        504,
+        504,
+        503,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.004350100003648549,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "pool_exhaustion",
+        "affected_service": "gateway",
+        "explanation": "Deterministic diagnostic rule over measured service evidence.",
+        "proposed_fix": "Inspect held connections; release leaks and size the pool after review.",
+        "evidence_ids": [
+          "e1",
+          "e2"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 2,
+            "dependency_timeouts": 2,
+            "latency_mean_seconds": 0.039980700000887735,
+            "request_limit": 100
+          }
+        },
+        "e2": {
+          "service": "gateway",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-18T02:38:17.082705+00:00",
+              "service": "gateway",
+              "status": 200,
+              "event": "request_ok"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:17.117690+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:17.130515+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:17.146714+00:00",
+              "service": "gateway",
+              "status": 504,
+              "event": "upstream_dependency_timeout"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:17.147046+00:00",
+              "service": "gateway",
+              "status": 504,
+              "event": "upstream_dependency_timeout"
+            }
+          ]
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "decision": {
+            "action": "read_logs",
+            "service": "gateway"
+          },
+          "evidence_id": "e2"
+        },
+        {
+          "turn": 3,
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "pool_exhaustion",
+            "affected_service": "gateway",
+            "explanation": "Deterministic diagnostic rule over measured service evidence.",
+            "proposed_fix": "Inspect held connections; release leaks and size the pool after review.",
+            "evidence_ids": [
+              "e1",
+              "e2"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": false,
+      "time_to_diagnosis_seconds": 0.06571580000309041,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "estimated_cost_usd": 0,
+      "fix_executed": false
+    },
+    {
+      "run_id": "8ede674d-4e20-4244-a15b-7aafe37d0d05",
+      "recorded_at": "2026-11-18T02:38:18.305647+00:00",
+      "fault": "slow_dependency",
+      "expected_service": "dependency",
+      "fault_verified": true,
+      "http_statuses": [
+        504,
+        504,
+        503,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.020281199998862576,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "pool_exhaustion",
+        "affected_service": "gateway",
+        "explanation": "Deterministic diagnostic rule over measured service evidence.",
+        "proposed_fix": "Inspect held connections; release leaks and size the pool after review.",
+        "evidence_ids": [
+          "e1",
+          "e2"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 2,
+            "dependency_timeouts": 2,
+            "latency_mean_seconds": 0.04480082000081893,
+            "request_limit": 100
+          }
+        },
+        "e2": {
+          "service": "gateway",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-18T02:38:18.199108+00:00",
+              "service": "gateway",
+              "status": 200,
+              "event": "request_ok"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:18.237348+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:18.267315+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:18.267564+00:00",
+              "service": "gateway",
+              "status": 504,
+              "event": "upstream_dependency_timeout"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:18.267721+00:00",
+              "service": "gateway",
+              "status": 504,
+              "event": "upstream_dependency_timeout"
+            }
+          ]
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "decision": {
+            "action": "read_logs",
+            "service": "gateway"
+          },
+          "evidence_id": "e2"
+        },
+        {
+          "turn": 3,
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "pool_exhaustion",
+            "affected_service": "gateway",
+            "explanation": "Deterministic diagnostic rule over measured service evidence.",
+            "proposed_fix": "Inspect held connections; release leaks and size the pool after review.",
+            "evidence_ids": [
+              "e1",
+              "e2"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": false,
+      "time_to_diagnosis_seconds": 0.07044820000010077,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "estimated_cost_usd": 0,
+      "fix_executed": false
+    },
+    {
+      "run_id": "180c4595-e009-4fa4-b294-b6d176a8242b",
+      "recorded_at": "2026-11-18T02:38:18.815721+00:00",
+      "fault": "bad_config",
+      "expected_service": "gateway",
+      "fault_verified": true,
+      "http_statuses": [
+        503,
+        503,
+        503,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.004618799997842871,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "bad_config",
+        "affected_service": "gateway",
+        "explanation": "Deterministic diagnostic rule over measured service evidence.",
+        "proposed_fix": "Restore a positive request_limit after review.",
+        "evidence_ids": [
+          "e1",
+          "e2"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 0,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.0009254599979612976,
+            "request_limit": 0
+          }
+        },
+        "e2": {
+          "service": "gateway",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-18T02:38:18.800956+00:00",
+              "service": "gateway",
+              "status": 200,
+              "event": "request_ok"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:18.803667+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "request_rejected: configured request_limit=0"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:18.805151+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "request_rejected: configured request_limit=0"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:18.805939+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "request_rejected: configured request_limit=0"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:18.807724+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "request_rejected: configured request_limit=0"
+            }
+          ]
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "decision": {
+            "action": "read_logs",
+            "service": "gateway"
+          },
+          "evidence_id": "e2"
+        },
+        {
+          "turn": 3,
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "bad_config",
+            "affected_service": "gateway",
+            "explanation": "Deterministic diagnostic rule over measured service evidence.",
+            "proposed_fix": "Restore a positive request_limit after review.",
+            "evidence_ids": [
+              "e1",
+              "e2"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": true,
+      "time_to_diagnosis_seconds": 0.007300000004761387,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "estimated_cost_usd": 0,
+      "fix_executed": false
+    },
+    {
+      "run_id": "0d3cdaef-0f05-4a6e-b3f4-d42241dd83ef",
+      "recorded_at": "2026-11-18T02:38:19.925123+00:00",
+      "fault": "pool_exhaustion",
+      "expected_service": "gateway",
+      "fault_verified": true,
+      "http_statuses": [
+        503,
+        503,
+        503,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.010313099999621045,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "pool_exhaustion",
+        "affected_service": "gateway",
+        "explanation": "Deterministic diagnostic rule over measured service evidence.",
+        "proposed_fix": "Inspect held connections; release leaks and size the pool after review.",
+        "evidence_ids": [
+          "e1",
+          "e2"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 4,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.03805086000065785,
+            "request_limit": 100
+          }
+        },
+        "e2": {
+          "service": "gateway",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-18T02:38:19.848154+00:00",
+              "service": "gateway",
+              "status": 200,
+              "event": "request_ok"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:19.896559+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:19.896879+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:19.897175+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-18T02:38:19.897305+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            }
+          ]
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "decision": {
+            "action": "read_logs",
+            "service": "gateway"
+          },
+          "evidence_id": "e2"
+        },
+        {
+          "turn": 3,
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "pool_exhaustion",
+            "affected_service": "gateway",
+            "explanation": "Deterministic diagnostic rule over measured service evidence.",
+            "proposed_fix": "Inspect held connections; release leaks and size the pool after review.",
+            "evidence_ids": [
+              "e1",
+              "e2"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": true,
+      "time_to_diagnosis_seconds": 0.0513375999944401,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "estimated_cost_usd": 0,
+      "fix_executed": false
+    }
+  ],
+  "records_sha256": "472dea32a881f1522ab5a456f9d563c8caa19fdb9482e1b70a28f3cad9db3ee5"
+}
