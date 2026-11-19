@@ -72,7 +72,7 @@ export function Detail({ client, setConnected, role }: { client: ApiClient; setC
 }
 
 function Shell({ children, connected, signOut, role }: { children: React.ReactNode; connected: boolean; signOut: () => void; role: string | null }) {
-  return <div className="shell"><aside><Link className="brand" to="/dashboard">IncidentPilot<span>OPERATOR CONSOLE</span></Link><nav><Link to="/dashboard">Dashboard</Link><Link to="/incidents">Incidents</Link></nav></aside><main><header><span className={`connection ${connected ? "online" : "offline"}`}><i />API {connected ? "Connected" : "Unavailable"}</span>{role && <span className="role">{role}</span>}<span className="environment">{deploymentLabel}</span><button className="quiet" onClick={signOut}>Sign out</button></header><p className="warning" style={{padding:"12px 24px"}}>DEMO — synthetic incidents, simulated AI and evidence. Decisions remain in this browser session; no remediation is executed.</p>{children}</main></div>;
+  return <div className="shell"><aside><Link className="brand" to="/dashboard">IncidentPilot<span>OPERATOR CONSOLE</span></Link><nav><Link to="/dashboard">Dashboard</Link><Link to="/incidents">Incidents</Link></nav></aside><main><header><span className={`connection ${connected ? "online" : "offline"}`}><i />API {connected ? "Connected" : "Unavailable"}</span>{role && <span className="role">{role}</span>}<details className="demo-note"><summary className="environment">{deploymentLabel} · Info</summary><p>Sample incidents and simulated actions stay in this browser. Recorded investigations use saved real runs. No remediation is executed.</p></details><button className="quiet" onClick={signOut}>Sign out</button></header>{children}</main></div>;
 }
 
 export function Console() {
