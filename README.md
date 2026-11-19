@@ -4,6 +4,17 @@ Evidence-driven autonomous incident investigation for SRE workflows with bounded
 
 IncidentPilot does not execute production-changing remediation.
 
+## Free recorded demo
+
+[Open the replay demo](https://incidentpilot-demo.onrender.com) ·
+[Inspect measurements and raw traces](https://incidentpilot-demo.onrender.com/evidence.html) ·
+[Reproduce the experiment](docs/portfolio-evidence.md)
+
+Nine real injected faults and recoveries were verified. The Qwen 1.5B agent
+identified 3/9 root causes (33.3%); the rules baseline identified 6/9 (66.7%).
+Incorrect diagnoses remain in the public replay. Visits do not invoke a model
+or execute remediation; the sample workspace uses browser-local simulated data.
+
 ## Overview
 
 IncidentPilot provides a monitored multi-service sandbox and an operator console for investigating persisted incidents. The Agent API collects and presents bounded, read-only operational evidence, correlates it with historical incident memory, persists a structured diagnosis and proposal, and stops at a human decision gate.

@@ -1017,30 +1017,23 @@
       "latency_max_seconds": 221.32118870000704,
       "requests_over_10_seconds": 2,
       "measurement_note": "All client timings retained, including two requests over 10 seconds. No outlier trimming. Hardware, precision, chat formatting and prefix caching differ across backends; timings are descriptive, not a controlled speedup claim."
-    }
-  ],
-  "api_attempt": {
-    "status": "incomplete",
-    "planned_requests": 200,
-    "attempted_requests": 73,
-    "request_errors": 5,
-    "reason": "Stopped after three consecutive Google HTTP 503 service errors. Partial metrics are not a completed benchmark comparison.",
-    "report": {
+    },
+    {
       "schema_version": 1,
       "evidence_type": "real_model_requests",
       "model": "gemini-3.5-flash-lite",
       "model_role": "api-zero-shot",
-      "created_at": "2026-11-19T05:27:14.063746+00:00",
+      "created_at": "2026-11-19T05:59:48.940789+00:00",
       "benchmark_sha256": "087c64082dc9ca2089d272650d5072000692222451a39057a083e541eaceb8d8",
       "prompt_version": "cuad-classification-id-v3-taxonomy",
       "metrics": {
-        "sample_size": 73,
-        "accuracy": 0.7534246575342466,
-        "macro_f1_all_categories": 0.718931475029036,
-        "macro_f1_supported_categories": 0.736904761904762,
-        "weighted_f1": 0.7527723418134377,
-        "invalid_output_rate": 0.0684931506849315,
-        "request_error_rate": 0.0684931506849315,
+        "sample_size": 200,
+        "accuracy": 0.765,
+        "macro_f1_all_categories": 0.7360508732459952,
+        "macro_f1_supported_categories": 0.7544521450771451,
+        "weighted_f1": 0.7846149406149406,
+        "invalid_output_rate": 0.07,
+        "request_error_rate": 0.07,
         "per_category": {
           "affiliate_license_licensee": {
             "support": 2,
@@ -1057,98 +1050,98 @@
             "f1": 0.0
           },
           "agreement_date": {
-            "support": 2,
+            "support": 6,
             "precision": 0.6666666666666666,
             "recall": 1.0,
             "accuracy_within_category": 1.0,
             "f1": 0.8
           },
           "anti_assignment": {
-            "support": 2,
-            "precision": 1.0,
+            "support": 6,
+            "precision": 0.75,
             "recall": 1.0,
             "accuracy_within_category": 1.0,
-            "f1": 1.0
+            "f1": 0.8571428571428571
           },
           "audit_rights": {
-            "support": 2,
-            "precision": 1.0,
+            "support": 6,
+            "precision": 0.8571428571428571,
             "recall": 1.0,
             "accuracy_within_category": 1.0,
-            "f1": 1.0
+            "f1": 0.923076923076923
           },
           "cap_on_liability": {
-            "support": 2,
-            "precision": 1.0,
-            "recall": 1.0,
-            "accuracy_within_category": 1.0,
-            "f1": 1.0
+            "support": 6,
+            "precision": 0.5714285714285714,
+            "recall": 0.6666666666666666,
+            "accuracy_within_category": 0.6666666666666666,
+            "f1": 0.6153846153846153
           },
           "change_of_control": {
-            "support": 2,
+            "support": 6,
             "precision": 1.0,
-            "recall": 0.5,
-            "accuracy_within_category": 0.5,
-            "f1": 0.6666666666666666
+            "recall": 0.6666666666666666,
+            "accuracy_within_category": 0.6666666666666666,
+            "f1": 0.8
           },
           "competitive_restriction_exception": {
-            "support": 2,
+            "support": 6,
             "precision": 1.0,
             "recall": 1.0,
             "accuracy_within_category": 1.0,
             "f1": 1.0
           },
           "covenant_not_to_sue": {
-            "support": 2,
+            "support": 6,
             "precision": 1.0,
             "recall": 1.0,
             "accuracy_within_category": 1.0,
             "f1": 1.0
           },
           "document_name": {
-            "support": 2,
-            "precision": 1.0,
+            "support": 6,
+            "precision": 0.8571428571428571,
             "recall": 1.0,
             "accuracy_within_category": 1.0,
-            "f1": 1.0
+            "f1": 0.923076923076923
           },
           "effective_date": {
-            "support": 2,
+            "support": 6,
             "precision": 1.0,
             "recall": 0.5,
             "accuracy_within_category": 0.5,
             "f1": 0.6666666666666666
           },
           "exclusivity": {
-            "support": 2,
-            "precision": 0.4,
-            "recall": 1.0,
-            "accuracy_within_category": 1.0,
+            "support": 6,
+            "precision": 0.5,
+            "recall": 0.6666666666666666,
+            "accuracy_within_category": 0.6666666666666666,
             "f1": 0.5714285714285715
           },
           "expiration_date": {
-            "support": 2,
+            "support": 6,
             "precision": 1.0,
             "recall": 1.0,
             "accuracy_within_category": 1.0,
             "f1": 1.0
           },
           "governing_law": {
-            "support": 2,
+            "support": 6,
             "precision": 1.0,
-            "recall": 1.0,
-            "accuracy_within_category": 1.0,
-            "f1": 1.0
+            "recall": 0.8333333333333334,
+            "accuracy_within_category": 0.8333333333333334,
+            "f1": 0.9090909090909091
           },
           "insurance": {
-            "support": 2,
+            "support": 6,
             "precision": 1.0,
-            "recall": 1.0,
-            "accuracy_within_category": 1.0,
-            "f1": 1.0
+            "recall": 0.8333333333333334,
+            "accuracy_within_category": 0.8333333333333334,
+            "f1": 0.9090909090909091
           },
           "ip_ownership_assignment": {
-            "support": 2,
+            "support": 6,
             "precision": 1.0,
             "recall": 1.0,
             "accuracy_within_category": 1.0,
@@ -1162,74 +1155,74 @@
             "f1": 1.0
           },
           "joint_ip_ownership": {
-            "support": 2,
+            "support": 6,
             "precision": 1.0,
             "recall": 1.0,
             "accuracy_within_category": 1.0,
             "f1": 1.0
           },
           "license_grant": {
-            "support": 2,
-            "precision": 0.4,
-            "recall": 1.0,
-            "accuracy_within_category": 1.0,
-            "f1": 0.5714285714285715
+            "support": 6,
+            "precision": 0.5,
+            "recall": 0.8333333333333334,
+            "accuracy_within_category": 0.8333333333333334,
+            "f1": 0.625
           },
           "liquidated_damages": {
-            "support": 2,
+            "support": 6,
             "precision": 1.0,
             "recall": 1.0,
             "accuracy_within_category": 1.0,
             "f1": 1.0
           },
           "minimum_commitment": {
-            "support": 2,
-            "precision": 0.6666666666666666,
-            "recall": 1.0,
-            "accuracy_within_category": 1.0,
-            "f1": 0.8
+            "support": 6,
+            "precision": 0.5555555555555556,
+            "recall": 0.8333333333333334,
+            "accuracy_within_category": 0.8333333333333334,
+            "f1": 0.6666666666666667
           },
           "most_favored_nation": {
-            "support": 2,
+            "support": 6,
             "precision": 1.0,
-            "recall": 0.5,
-            "accuracy_within_category": 0.5,
-            "f1": 0.6666666666666666
-          },
-          "no_solicit_of_customers": {
-            "support": 2,
-            "precision": 1.0,
-            "recall": 0.5,
-            "accuracy_within_category": 0.5,
-            "f1": 0.6666666666666666
-          },
-          "no_solicit_of_employees": {
-            "support": 2,
-            "precision": 0.6666666666666666,
-            "recall": 1.0,
-            "accuracy_within_category": 1.0,
+            "recall": 0.6666666666666666,
+            "accuracy_within_category": 0.6666666666666666,
             "f1": 0.8
           },
-          "non_compete": {
-            "support": 2,
+          "no_solicit_of_customers": {
+            "support": 3,
             "precision": 1.0,
-            "recall": 0.5,
-            "accuracy_within_category": 0.5,
-            "f1": 0.6666666666666666
+            "recall": 0.6666666666666666,
+            "accuracy_within_category": 0.6666666666666666,
+            "f1": 0.8
+          },
+          "no_solicit_of_employees": {
+            "support": 6,
+            "precision": 0.8571428571428571,
+            "recall": 1.0,
+            "accuracy_within_category": 1.0,
+            "f1": 0.923076923076923
+          },
+          "non_compete": {
+            "support": 6,
+            "precision": 1.0,
+            "recall": 0.3333333333333333,
+            "accuracy_within_category": 0.3333333333333333,
+            "f1": 0.5
           },
           "non_disparagement": {
-            "support": 2,
-            "precision": 0.0,
-            "recall": 0.0,
-            "accuracy_within_category": 0.0,
-            "f1": 0.0
+            "support": 5,
+            "precision": 1.0,
+            "recall": 0.6,
+            "accuracy_within_category": 0.6,
+            "f1": 0.7499999999999999
           },
           "non_transferable_license": {
-            "support": 2,
+            "support": 5,
             "precision": 1.0,
-            "recall": 0.5,
-            "accuracy_within_category": 0.5,
-            "f1": 0.6666666666666666
+            "recall": 0.4,
+            "accuracy_within_category": 0.4,
+            "f1": 0.5714285714285715
           },
           "notice_period_to_terminate_renewal": {
             "support": 1,
@@ -1239,74 +1232,74 @@
             "f1": 0.0
           },
           "parties": {
-            "support": 2,
+            "support": 5,
             "precision": 1.0,
-            "recall": 1.0,
-            "accuracy_within_category": 1.0,
-            "f1": 1.0
+            "recall": 0.6,
+            "accuracy_within_category": 0.6,
+            "f1": 0.7499999999999999
           },
           "post_termination_services": {
-            "support": 2,
+            "support": 5,
             "precision": 0.6666666666666666,
-            "recall": 1.0,
-            "accuracy_within_category": 1.0,
-            "f1": 0.8
+            "recall": 0.8,
+            "accuracy_within_category": 0.8,
+            "f1": 0.7272727272727272
           },
           "price_restrictions": {
-            "support": 2,
-            "precision": 0.6666666666666666,
+            "support": 5,
+            "precision": 0.7142857142857143,
             "recall": 1.0,
             "accuracy_within_category": 1.0,
-            "f1": 0.8
+            "f1": 0.8333333333333333
           },
           "renewal_term": {
-            "support": 2,
+            "support": 5,
             "precision": 1.0,
-            "recall": 0.5,
-            "accuracy_within_category": 0.5,
-            "f1": 0.6666666666666666
+            "recall": 0.6,
+            "accuracy_within_category": 0.6,
+            "f1": 0.7499999999999999
           },
           "revenue_profit_sharing": {
-            "support": 2,
+            "support": 5,
             "precision": 1.0,
-            "recall": 0.5,
-            "accuracy_within_category": 0.5,
-            "f1": 0.6666666666666666
+            "recall": 0.6,
+            "accuracy_within_category": 0.6,
+            "f1": 0.7499999999999999
           },
           "rofr_rofo_rofn": {
-            "support": 2,
-            "precision": 1.0,
-            "recall": 0.5,
-            "accuracy_within_category": 0.5,
-            "f1": 0.6666666666666666
+            "support": 5,
+            "precision": 0.75,
+            "recall": 0.6,
+            "accuracy_within_category": 0.6,
+            "f1": 0.6666666666666665
           },
           "source_code_escrow": {
-            "support": 2,
+            "support": 4,
             "precision": 1.0,
-            "recall": 0.5,
-            "accuracy_within_category": 0.5,
-            "f1": 0.6666666666666666
+            "recall": 0.75,
+            "accuracy_within_category": 0.75,
+            "f1": 0.8571428571428571
           },
           "termination_for_convenience": {
-            "support": 2,
-            "precision": 0.0,
-            "recall": 0.0,
-            "accuracy_within_category": 0.0,
-            "f1": 0.0
+            "support": 5,
+            "precision": 1.0,
+            "recall": 0.6,
+            "accuracy_within_category": 0.6,
+            "f1": 0.7499999999999999
           },
           "third_party_beneficiary": {
-            "support": 1,
+            "support": 2,
             "precision": 1.0,
             "recall": 1.0,
             "accuracy_within_category": 1.0,
             "f1": 1.0
           },
           "uncapped_liability": {
-            "support": 1,
+            "support": 5,
             "precision": 1.0,
-            "recall": 1.0,
-            "accuracy_within_category": 1.0,
-            "f1": 1.0
+            "recall": 0.4,
+            "accuracy_within_category": 0.4,
+            "f1": 0.5714285714285715
           },
           "unlimited_all_you_can_eat_license": {
             "support": 1,
@@ -1316,31 +1309,31 @@
             "f1": 0.0
           },
           "volume_restriction": {
-            "support": 1,
-            "precision": 0.0,
-            "recall": 0.0,
-            "accuracy_within_category": 0.0,
-            "f1": 0.0
+            "support": 5,
+            "precision": 0.5,
+            "recall": 0.4,
+            "accuracy_within_category": 0.4,
+            "f1": 0.4444444444444445
           },
           "warranty_duration": {
-            "support": 1,
-            "precision": 1.0,
-            "recall": 1.0,
-            "accuracy_within_category": 1.0,
-            "f1": 1.0
+            "support": 5,
+            "precision": 0.8,
+            "recall": 0.8,
+            "accuracy_within_category": 0.8,
+            "f1": 0.8000000000000002
           }
         }
       },
-      "completed_requests": 73,
+      "completed_requests": 200,
       "planned_requests": 200,
-      "status": "incomplete",
+      "status": "complete",
       "request_interval_seconds": 4.5,
-      "resumed_from_records_sha256": "c74c44137449fd0d3801a7f1e9a58d4c3bb2e069f324bcc78b2c880ba551d89c",
+      "resumed_from_records_sha256": "8ebc73592ea0245f5b5c18536bf1722e3cacf363a69b3c9aec7aafe79be3dcdb",
       "duration_note": "Sum of active run segments, excluding downtime between resumes",
-      "duration_seconds": 475.1759962999786,
-      "latency_median_seconds": 1.9927736999816261,
-      "latency_p95_seconds": 10.597662899992429,
-      "throughput_clauses_per_second": 0.15362728876968587,
+      "duration_seconds": 1184.6752441999852,
+      "latency_median_seconds": 2.0316305000160355,
+      "latency_p95_seconds": 9.859076199994888,
+      "throughput_clauses_per_second": 0.1688226380851409,
       "input_tokens": null,
       "output_tokens": null,
       "estimated_cost_usd": null,
@@ -1352,7 +1345,8 @@
       },
       "server_peak_memory_bytes": null,
       "server_memory_note": "Measure on inference host; client RSS is not model memory.",
-      "records_sha256": "8ebc73592ea0245f5b5c18536bf1722e3cacf363a69b3c9aec7aafe79be3dcdb"
+      "records_sha256": "0723b6c7ef6e42dcd501dafa36615389fc3d51e6e07287d6c8a948b02a5eb77a"
     }
-  }
+  ],
+  "status_message": "Four recorded runs on the same 200 held-out clauses; public interface uses replay / mock mode."
 }
