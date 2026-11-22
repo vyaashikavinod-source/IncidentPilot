@@ -58,3 +58,15 @@ visible. This small public instruction model is not project-fine-tuned.
 The public replay now presents the LLM result alongside the earlier rules-baseline
 summary. No public request invokes the model, and no model/API key is exposed.
 The local inference process was stopped after measurement. The user chose the free recorded replay instead of public runtime model hosting.
+
+
+## Failure audit — 21 November 2026
+
+All nine raw diagnoses predict `pool_exhaustion`. Each trace calls only
+`read_metrics` for `gateway`, then diagnoses: no logs, config or dependency
+evidence is read. Accuracy 3/9 matches an always-pool predictor on the balanced
+three-fault sample; it does not demonstrate root-cause discrimination.
+Bad-config evidence has `request_limit: 0`. The model also invents 50 requests
+where the recorded counter is 5. Rules outperform it (6/9). No improved agent
+run is claimed. The browser's incident list now maps the nine recorded run IDs
+to the actual evidence/diagnoses, replacing unrelated synthetic sample rows.
