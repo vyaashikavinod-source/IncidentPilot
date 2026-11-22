@@ -24,12 +24,12 @@ const deploymentLabel =
 const formatTime = (value: string) => new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
 const SeverityBadge = ({ severity }: { severity: Severity }) => <span className={`badge severity-${severity}`}>{severity}</span>;
 const StatusBadge = ({ status }: { status: string }) => <span className="badge status">{status.replaceAll("_", " ")}</span>;
-const Loading = ({ label = "Loading incident dataâ€¦" }: { label?: string }) => <div className="state" role="status">{label}</div>;
+const Loading = ({ label = "Loading incident data…" }: { label?: string }) => <div className="state" role="status">{label}</div>;
 const Empty = ({ label }: { label: string }) => <div className="state">{label}</div>;
 const ErrorView = ({ error, retry }: { error: ApiError; retry: () => void }) => <div className="state error" role="alert"><p>{error.message}</p><button onClick={retry}>Retry</button></div>;
 
 function IncidentTable({ items }: { items: IncidentSummary[] }) {
-  return <div className="table-wrap"><table><thead><tr><th>Incident</th><th>Severity</th><th>Status</th><th>Source</th><th>Service</th><th>Created</th><th>Updated</th></tr></thead><tbody>{items.map((incident) => <tr key={incident.incident_id}><td><Link to={`/incidents/${incident.incident_id}`} className="incident-link">{incident.title}<code>{incident.incident_id}</code></Link></td><td><SeverityBadge severity={incident.severity} /></td><td><StatusBadge status={incident.status} /></td><td>{incident.source}</td><td>{incident.affected_service ?? "â€”"}</td><td>{formatTime(incident.created_at)}</td><td>{formatTime(incident.updated_at)}</td></tr>)}</tbody></table></div>;
+  return <div className="table-wrap"><table><thead><tr><th>Incident</th><th>Severity</th><th>Status</th><th>Source</th><th>Service</th><th>Created</th><th>Updated</th></tr></thead><tbody>{items.map((incident) => <tr key={incident.incident_id}><td><Link to={`/incidents/${incident.incident_id}`} className="incident-link">{incident.title}<code>{incident.incident_id}</code></Link></td><td><SeverityBadge severity={incident.severity} /></td><td><StatusBadge status={incident.status} /></td><td>{incident.source}</td><td>{incident.affected_service ?? "—"}</td><td>{formatTime(incident.created_at)}</td><td>{formatTime(incident.updated_at)}</td></tr>)}</tbody></table></div>;
 }
 
 function useList(client: ApiClient, filters: IncidentFilters) {
@@ -42,7 +42,7 @@ function useList(client: ApiClient, filters: IncidentFilters) {
 
 export function Login({ connect, message }: { connect: (value: string) => void; message: string }) {
   const [token, setToken] = useState("");
-  return <main className="login-page"><section className="login-card"><p className="eyebrow">INCIDENT RESPONSE</p><h1>IncidentPilot</h1><h2>Operator Console</h2><p className="muted">Public demo: synthetic incidents and simulated evidence. Decisions stay in this browser session.</p>{message && <p className="login-error" role="alert">{message}</p>}<button type="button" onClick={() => connect("public-demo")}>Explore demo</button><p className="muted">Use the sample workspace; no account or credentials are needed.</p><form hidden onSubmit={(event) => { event.preventDefault(); if (token.trim()) connect(token.trim()); }}><label htmlFor="token">Bearer Token<input id="token" type="password" autoComplete="off" value={token} onChange={(event) => setToken(event.target.value)} /></label><button type="submit" disabled={!token.trim()}>Connect</button></form></section></main>;
+  return <main className="login-page"><section className="login-card"><p className="eyebrow">INCIDENT RESPONSE</p><h1>IncidentPilot</h1><h2>Operator Console</h2><p className="muted">Recorded investigations of real injected faults. This demo replays saved results; no remediation is executed.</p>{message && <p className="login-error" role="alert">{message}</p>}<button type="button" onClick={() => connect("public-demo")}>Explore demo</button><p className="muted">Explore nine recorded incidents; no account or credentials are needed.</p><form hidden onSubmit={(event) => { event.preventDefault(); if (token.trim()) connect(token.trim()); }}><label htmlFor="token">Bearer Token<input id="token" type="password" autoComplete="off" value={token} onChange={(event) => setToken(event.target.value)} /></label><button type="submit" disabled={!token.trim()}>Connect</button></form></section></main>;
 }
 
 export function Dashboard({ client, setConnected }: { client: ApiClient; setConnected: (value: boolean) => void }) {
@@ -67,12 +67,12 @@ export function Detail({ client, setConnected, role }: { client: ApiClient; setC
   const load = useCallback(() => { setIncident(undefined); setError(undefined); void getIncident(client, incidentId).then((value) => { setIncident(value); setConnected(true); }).catch((reason: ApiError) => { setError(reason); setConnected(false); }); }, [client, incidentId, setConnected]);
   useEffect(load, [load]);
   if (error) return <section className="page"><ErrorView error={error} retry={load} /></section>;
-  if (!incident) return <section className="page"><Loading label="Loading incidentâ€¦" /></section>;
+  if (!incident) return <section className="page"><Loading label="Loading incident…" /></section>;
   return <section className="page"><p className="eyebrow">INCIDENT OVERVIEW</p><div className="incident-header"><div><h1>{incident.title}</h1><code>{incident.incident_id}</code></div><div className="badges"><SeverityBadge severity={incident.severity} /><StatusBadge status={incident.status} /></div></div><Workspace client={client} incident={incident} role={role} /></section>;
 }
 
 function Shell({ children, connected, signOut, role }: { children: React.ReactNode; connected: boolean; signOut: () => void; role: string | null }) {
-  return <div className="shell"><aside><Link className="brand" to="/dashboard">IncidentPilot<span>OPERATOR CONSOLE</span></Link><nav><Link to="/dashboard">Dashboard</Link><Link to="/incidents">Incidents</Link></nav></aside><main><header><span className={`connection ${connected ? "online" : "offline"}`}><i />Replay {connected ? "Ready" : "Unavailable"}</span>{role && <span className="role">{role}</span>}<details className="demo-note"><summary className="environment">{deploymentLabel} Â· Info</summary><p>Sample incidents and simulated actions stay in this browser. Recorded investigations use saved real runs. No remediation is executed.</p></details><button className="quiet" onClick={signOut}>Sign out</button></header>{children}</main></div>;
+  return <div className="shell"><aside><Link className="brand" to="/dashboard">IncidentPilot<span>OPERATOR CONSOLE</span></Link><nav><Link to="/dashboard">Dashboard</Link><Link to="/incidents">Incidents</Link></nav></aside><main><header><span className={`connection ${connected ? "online" : "offline"}`}><i />Replay {connected ? "Ready" : "Unavailable"}</span>{role && <span className="role">{role}</span>}<details className="demo-note"><summary className="environment">{deploymentLabel} · Info</summary><p>Sample incidents and simulated actions stay in this browser. Recorded investigations use saved real runs. No remediation is executed.</p></details><button className="quiet" onClick={signOut}>Sign out</button></header>{children}</main></div>;
 }
 
 export function Console() {
