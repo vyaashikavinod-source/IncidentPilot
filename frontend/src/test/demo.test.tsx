@@ -18,10 +18,12 @@ it('uses recorded incident IDs and actual evidence without backend calls', async
   const id=recorded.runs[0].run_id;
   const detail = await demoRequest<{evidence:unknown}>('GET',`/v1/incidents/${id}`);
   expect(detail.evidence).toEqual(recorded.runs[0].evidence);
-  const investigation = await demoRequest<{tool_call_count:number;diagnosis:{likely_root_cause:string;confidence:null}}>('GET',`/v1/incidents/${id}/investigation`);
+  const investigation = await demoRequest<{tool_call_count:number;steps:{disposition:string;evidence_ids:string[]}[];diagnosis:{likely_root_cause:string;confidence:null}}>('GET',`/v1/incidents/${id}/investigation`);
   expect(investigation.tool_call_count).toBeGreaterThanOrEqual(6);
   expect(investigation.diagnosis.likely_root_cause).toBe(recorded.runs[0].diagnosis?.root_cause);
   expect(investigation.diagnosis.confidence).toBeNull();
+  expect(investigation.steps.at(-1)?.disposition).toBe('diagnose');
+  expect(investigation.steps.at(-1)?.evidence_ids).toEqual(recorded.runs[0].diagnosis?.evidence_ids);
   expect(globalThis.fetch).not.toHaveBeenCalled();
 });
 it('renders the measured failure audit and nine recorded incidents', async () => {
