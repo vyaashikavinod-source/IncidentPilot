@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { App } from '../main';
 import { demoRequest } from '../api/demo';
-import recorded from '../recorded-runs.json';
+import recorded from '../recorded-runs-v2.json';
 
 beforeEach(() => {
   sessionStorage.clear();
@@ -19,8 +19,8 @@ it('uses recorded incident IDs and actual evidence without backend calls', async
   const detail = await demoRequest<{evidence:unknown}>('GET',`/v1/incidents/${id}`);
   expect(detail.evidence).toEqual(recorded.runs[0].evidence);
   const investigation = await demoRequest<{tool_call_count:number;diagnosis:{likely_root_cause:string;confidence:null}}>('GET',`/v1/incidents/${id}/investigation`);
-  expect(investigation.tool_call_count).toBe(1);
-  expect(investigation.diagnosis.likely_root_cause).toBe('pool_exhaustion');
+  expect(investigation.tool_call_count).toBeGreaterThanOrEqual(6);
+  expect(investigation.diagnosis.likely_root_cause).toBe(recorded.runs[0].diagnosis?.root_cause);
   expect(investigation.diagnosis.confidence).toBeNull();
   expect(globalThis.fetch).not.toHaveBeenCalled();
 });

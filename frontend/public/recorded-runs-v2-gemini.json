@@ -1,0 +1,1925 @@
+{
+  "schema_version": 1,
+  "evidence_type": "real_loopback_http_faults",
+  "agent_type": "real_model",
+  "model": "gemini-3.5-flash-lite",
+  "seed": 42,
+  "sample_size": 9,
+  "investigation_policy": "evidence-v2",
+  "accuracy": 0.3333333333333333,
+  "faults_verified": 9,
+  "recoveries_verified": 9,
+  "median_time_to_diagnosis_seconds": 4.299383799996576,
+  "input_tokens": 10952,
+  "output_tokens": 2053,
+  "estimated_cost_usd": null,
+  "pricing": {
+    "input_usd_per_million": null,
+    "output_usd_per_million": null
+  },
+  "runs": [
+    {
+      "run_id": "e85bc178-f145-4cc6-976e-f25023a97abd",
+      "recorded_at": "2026-11-25T07:06:17.262635+00:00",
+      "fault": "bad_config",
+      "expected_service": "gateway",
+      "fault_verified": true,
+      "http_statuses": [
+        503,
+        503,
+        503,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.004259699999238364,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "bad_config",
+        "affected_service": "gateway",
+        "explanation": "The gateway configuration sets request_limit to 0 (e3), which is corroborated by the gateway log events showing requests being rejected due to this specific configuration (e2).",
+        "proposed_fix": "Update the gateway configuration to set a valid non-zero request_limit.",
+        "evidence_ids": [
+          "e2",
+          "e3",
+          "e5"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 0,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.0008532000007107854,
+            "request_limit": 0
+          }
+        },
+        "e2": {
+          "service": "gateway",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-25T07:06:11.206495+00:00",
+              "service": "gateway",
+              "status": 200,
+              "event": "request_ok"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:11.208708+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "request_rejected: configured request_limit=0"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:11.209786+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "request_rejected: configured request_limit=0"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:11.210435+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "request_rejected: configured request_limit=0"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:11.210862+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "request_rejected: configured request_limit=0"
+            }
+          ]
+        },
+        "e3": {
+          "service": "gateway",
+          "tool": "read_config",
+          "value": {
+            "request_limit": 0,
+            "pool_capacity": 2,
+            "pool_acquire_timeout_seconds": 0.03,
+            "upstream_timeout_seconds": 0.05
+          }
+        },
+        "e4": {
+          "service": "dependency",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 1,
+            "errors": 0,
+            "pool_timeouts": 0,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.00217650001286529,
+            "request_limit": null
+          }
+        },
+        "e5": {
+          "service": "dependency",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-25T07:06:11.205812+00:00",
+              "service": "dependency",
+              "status": 200,
+              "event": "request_ok"
+            }
+          ]
+        },
+        "e6": {
+          "service": "dependency",
+          "tool": "read_config",
+          "value": {
+            "work_delay_seconds": 0.002
+          }
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_logs",
+            "service": "gateway"
+          },
+          "evidence_id": "e2"
+        },
+        {
+          "turn": 3,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_config",
+            "service": "gateway"
+          },
+          "evidence_id": "e3"
+        },
+        {
+          "turn": 4,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_metrics",
+            "service": "dependency"
+          },
+          "evidence_id": "e4"
+        },
+        {
+          "turn": 5,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_logs",
+            "service": "dependency"
+          },
+          "evidence_id": "e5"
+        },
+        {
+          "turn": 6,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_config",
+            "service": "dependency"
+          },
+          "evidence_id": "e6"
+        },
+        {
+          "turn": 7,
+          "actor": "model",
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "bad_config",
+            "affected_service": "gateway",
+            "explanation": "The gateway configuration has a request_limit set to 0 (e3), causing all subsequent incoming requests to be immediately rejected with a 503 status code and the log event 'request_rejected: configured request_limit=0' (e2).",
+            "proposed_fix": "Update the gateway configuration to set a valid non-zero request_limit.",
+            "evidence_ids": [
+              "e2",
+              "e3"
+            ]
+          },
+          "validation_error": "Insufficient or invalid evidence citations"
+        },
+        {
+          "turn": 8,
+          "actor": "model",
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "bad_config",
+            "affected_service": "gateway",
+            "explanation": "The gateway configuration sets request_limit to 0 (e3), which is corroborated by the gateway log events showing requests being rejected due to this specific configuration (e2).",
+            "proposed_fix": "Update the gateway configuration to set a valid non-zero request_limit.",
+            "evidence_ids": [
+              "e2",
+              "e3",
+              "e5"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": true,
+      "time_to_diagnosis_seconds": 6.051013599993894,
+      "input_tokens": 1910,
+      "output_tokens": 243,
+      "estimated_cost_usd": null,
+      "fix_executed": false
+    },
+    {
+      "run_id": "f12dc2ea-789b-44dd-b528-2184f868d04e",
+      "recorded_at": "2026-11-25T07:06:26.154721+00:00",
+      "fault": "bad_config",
+      "expected_service": "gateway",
+      "fault_verified": true,
+      "http_statuses": [
+        503,
+        503,
+        503,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.004307900002459064,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "bad_config",
+        "affected_service": "gateway",
+        "explanation": "The gateway configuration (e3) defines a request_limit of 0, which directly contradicts normal operation and leads to the gateway logs (e2) recording HTTP 503 errors stating 'request_rejected: configured request_limit=0'. Additionally, gateway metrics (e1) confirm 4 errors out of 5 requests with zero pool or dependency timeouts, while dependency metrics (e4) and logs (e5) show the downstream service is healthy and processing requests normally, proving the errors stem solely from the gateway's misconfiguration.",
+        "proposed_fix": "Increase the gateway request_limit configuration value from 0 to an appropriate operational limit.",
+        "evidence_ids": [
+          "e1",
+          "e2",
+          "e3",
+          "e4",
+          "e5"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 0,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.0008635399979539215,
+            "request_limit": 0
+          }
+        },
+        "e2": {
+          "service": "gateway",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-25T07:06:18.276617+00:00",
+              "service": "gateway",
+              "status": 200,
+              "event": "request_ok"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:18.279155+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "request_rejected: configured request_limit=0"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:18.280079+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "request_rejected: configured request_limit=0"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:18.280728+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "request_rejected: configured request_limit=0"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:18.281565+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "request_rejected: configured request_limit=0"
+            }
+          ]
+        },
+        "e3": {
+          "service": "gateway",
+          "tool": "read_config",
+          "value": {
+            "request_limit": 0,
+            "pool_capacity": 2,
+            "pool_acquire_timeout_seconds": 0.03,
+            "upstream_timeout_seconds": 0.05
+          }
+        },
+        "e4": {
+          "service": "dependency",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 1,
+            "errors": 0,
+            "pool_timeouts": 0,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.002413199996226467,
+            "request_limit": null
+          }
+        },
+        "e5": {
+          "service": "dependency",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-25T07:06:18.275978+00:00",
+              "service": "dependency",
+              "status": 200,
+              "event": "request_ok"
+            }
+          ]
+        },
+        "e6": {
+          "service": "dependency",
+          "tool": "read_config",
+          "value": {
+            "work_delay_seconds": 0.002
+          }
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_logs",
+            "service": "gateway"
+          },
+          "evidence_id": "e2"
+        },
+        {
+          "turn": 3,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_config",
+            "service": "gateway"
+          },
+          "evidence_id": "e3"
+        },
+        {
+          "turn": 4,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_metrics",
+            "service": "dependency"
+          },
+          "evidence_id": "e4"
+        },
+        {
+          "turn": 5,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_logs",
+            "service": "dependency"
+          },
+          "evidence_id": "e5"
+        },
+        {
+          "turn": 6,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_config",
+            "service": "dependency"
+          },
+          "evidence_id": "e6"
+        },
+        {
+          "turn": 7,
+          "actor": "model",
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "bad_config",
+            "affected_service": "gateway",
+            "explanation": "The gateway configuration explicitly sets request_limit to 0, which causes all incoming requests after the first one to be immediately rejected with status 503 as shown in the gateway logs.",
+            "proposed_fix": "Update the gateway configuration to set a valid non-zero request_limit.",
+            "evidence_ids": [
+              "e2",
+              "e3"
+            ]
+          },
+          "validation_error": "Insufficient or invalid evidence citations"
+        },
+        {
+          "turn": 8,
+          "actor": "model",
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "bad_config",
+            "affected_service": "gateway",
+            "explanation": "The gateway configuration (e3) defines a request_limit of 0, which directly contradicts normal operation and leads to the gateway logs (e2) recording HTTP 503 errors stating 'request_rejected: configured request_limit=0'. Additionally, gateway metrics (e1) confirm 4 errors out of 5 requests with zero pool or dependency timeouts, while dependency metrics (e4) and logs (e5) show the downstream service is healthy and processing requests normally, proving the errors stem solely from the gateway's misconfiguration.",
+            "proposed_fix": "Increase the gateway request_limit configuration value from 0 to an appropriate operational limit.",
+            "evidence_ids": [
+              "e1",
+              "e2",
+              "e3",
+              "e4",
+              "e5"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": true,
+      "time_to_diagnosis_seconds": 7.850903099999414,
+      "input_tokens": 1896,
+      "output_tokens": 313,
+      "estimated_cost_usd": null,
+      "fix_executed": false
+    },
+    {
+      "run_id": "5a3443e0-2b33-4633-ba87-526f9a095431",
+      "recorded_at": "2026-11-25T07:06:31.256493+00:00",
+      "fault": "pool_exhaustion",
+      "expected_service": "gateway",
+      "fault_verified": true,
+      "http_statuses": [
+        503,
+        503,
+        503,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.0125706000108039,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "bad_config",
+        "affected_service": "gateway",
+        "explanation": "The gateway configuration sets pool_capacity to 2 while having a low pool_acquire_timeout_seconds of 0.03. The metrics (e1) and logs (e2) show connection pool acquire timeouts under minimal load, which stems from overly restrictive connection pool settings compared to the traffic pattern. The dependency service is healthy and fast (e4, e5, e6).",
+        "proposed_fix": "Increase the gateway's pool_capacity and pool_acquire_timeout_seconds to adequately handle incoming request concurrency.",
+        "evidence_ids": [
+          "e1",
+          "e2",
+          "e3",
+          "e4",
+          "e5"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 4,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.03305624000204262,
+            "request_limit": 100
+          }
+        },
+        "e2": {
+          "service": "gateway",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-25T07:06:26.669438+00:00",
+              "service": "gateway",
+              "status": 200,
+              "event": "request_ok"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:26.715601+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:26.715935+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:26.716276+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:26.716459+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            }
+          ]
+        },
+        "e3": {
+          "service": "gateway",
+          "tool": "read_config",
+          "value": {
+            "request_limit": 100,
+            "pool_capacity": 2,
+            "pool_acquire_timeout_seconds": 0.03,
+            "upstream_timeout_seconds": 0.05
+          }
+        },
+        "e4": {
+          "service": "dependency",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 1,
+            "errors": 0,
+            "pool_timeouts": 0,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.0022104999952716753,
+            "request_limit": null
+          }
+        },
+        "e5": {
+          "service": "dependency",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-25T07:06:26.668421+00:00",
+              "service": "dependency",
+              "status": 200,
+              "event": "request_ok"
+            }
+          ]
+        },
+        "e6": {
+          "service": "dependency",
+          "tool": "read_config",
+          "value": {
+            "work_delay_seconds": 0.002
+          }
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_logs",
+            "service": "gateway"
+          },
+          "evidence_id": "e2"
+        },
+        {
+          "turn": 3,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_config",
+            "service": "gateway"
+          },
+          "evidence_id": "e3"
+        },
+        {
+          "turn": 4,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_metrics",
+            "service": "dependency"
+          },
+          "evidence_id": "e4"
+        },
+        {
+          "turn": 5,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_logs",
+            "service": "dependency"
+          },
+          "evidence_id": "e5"
+        },
+        {
+          "turn": 6,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_config",
+            "service": "dependency"
+          },
+          "evidence_id": "e6"
+        },
+        {
+          "turn": 7,
+          "actor": "model",
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "bad_config",
+            "affected_service": "gateway",
+            "explanation": "The gateway configuration sets pool_capacity to 2 while having a low pool_acquire_timeout_seconds of 0.03. The metrics (e1) and logs (e2) show connection pool acquire timeouts under minimal load, which stems from overly restrictive connection pool settings compared to the traffic pattern. The dependency service is healthy and fast (e4, e5, e6).",
+            "proposed_fix": "Increase the gateway's pool_capacity and pool_acquire_timeout_seconds to adequately handle incoming request concurrency.",
+            "evidence_ids": [
+              "e1",
+              "e2",
+              "e3",
+              "e4",
+              "e5"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": false,
+      "time_to_diagnosis_seconds": 4.578597100000479,
+      "input_tokens": 874,
+      "output_tokens": 193,
+      "estimated_cost_usd": null,
+      "fix_executed": false
+    },
+    {
+      "run_id": "91b20957-d5e7-4e93-8611-d8b183a9e87d",
+      "recorded_at": "2026-11-25T07:06:35.155084+00:00",
+      "fault": "pool_exhaustion",
+      "expected_service": "gateway",
+      "fault_verified": true,
+      "http_statuses": [
+        503,
+        503,
+        503,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.0051562000007834285,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "bad_config",
+        "affected_service": "gateway",
+        "explanation": "The gateway is experiencing connection pool acquisition timeouts (pool_timeouts: 4, status 503) because the pool_capacity is configured to only 2, which is insufficient for the concurrency of incoming requests, and the pool_acquire_timeout_seconds is set very low at 0.03. The dependency itself is healthy, responding quickly with a mean latency of ~0.002s and zero errors.",
+        "proposed_fix": "Increase the gateway connection pool_capacity and pool_acquire_timeout_seconds to properly handle the expected request load.",
+        "evidence_ids": [
+          "e1",
+          "e2",
+          "e3",
+          "e4"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 4,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.03438487999956123,
+            "request_limit": 100
+          }
+        },
+        "e2": {
+          "service": "gateway",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-25T07:06:32.286388+00:00",
+              "service": "gateway",
+              "status": 200,
+              "event": "request_ok"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:32.330911+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:32.331067+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:32.331159+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:32.331622+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            }
+          ]
+        },
+        "e3": {
+          "service": "gateway",
+          "tool": "read_config",
+          "value": {
+            "request_limit": 100,
+            "pool_capacity": 2,
+            "pool_acquire_timeout_seconds": 0.03,
+            "upstream_timeout_seconds": 0.05
+          }
+        },
+        "e4": {
+          "service": "dependency",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 1,
+            "errors": 0,
+            "pool_timeouts": 0,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.0022830999951111153,
+            "request_limit": null
+          }
+        },
+        "e5": {
+          "service": "dependency",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-25T07:06:32.285216+00:00",
+              "service": "dependency",
+              "status": 200,
+              "event": "request_ok"
+            }
+          ]
+        },
+        "e6": {
+          "service": "dependency",
+          "tool": "read_config",
+          "value": {
+            "work_delay_seconds": 0.002
+          }
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_logs",
+            "service": "gateway"
+          },
+          "evidence_id": "e2"
+        },
+        {
+          "turn": 3,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_config",
+            "service": "gateway"
+          },
+          "evidence_id": "e3"
+        },
+        {
+          "turn": 4,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_metrics",
+            "service": "dependency"
+          },
+          "evidence_id": "e4"
+        },
+        {
+          "turn": 5,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_logs",
+            "service": "dependency"
+          },
+          "evidence_id": "e5"
+        },
+        {
+          "turn": 6,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_config",
+            "service": "dependency"
+          },
+          "evidence_id": "e6"
+        },
+        {
+          "turn": 7,
+          "actor": "model",
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "bad_config",
+            "affected_service": "gateway",
+            "explanation": "The gateway is experiencing connection pool acquisition timeouts (pool_timeouts: 4, status 503) because the pool_capacity is configured to only 2, which is insufficient for the concurrency of incoming requests, and the pool_acquire_timeout_seconds is set very low at 0.03. The dependency itself is healthy, responding quickly with a mean latency of ~0.002s and zero errors.",
+            "proposed_fix": "Increase the gateway connection pool_capacity and pool_acquire_timeout_seconds to properly handle the expected request load.",
+            "evidence_ids": [
+              "e1",
+              "e2",
+              "e3",
+              "e4"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": false,
+      "time_to_diagnosis_seconds": 2.8518945000105305,
+      "input_tokens": 874,
+      "output_tokens": 194,
+      "estimated_cost_usd": null,
+      "fix_executed": false
+    },
+    {
+      "run_id": "7c1930e3-8b42-4557-b802-9670aff731af",
+      "recorded_at": "2026-11-25T07:06:39.704072+00:00",
+      "fault": "slow_dependency",
+      "expected_service": "dependency",
+      "fault_verified": true,
+      "http_statuses": [
+        504,
+        504,
+        503,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.00523970001086127,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "bad_config",
+        "affected_service": "gateway",
+        "explanation": "The dependency's work_delay_seconds is configured to 0.2 seconds (e6), but the gateway's upstream_timeout_seconds is configured to 0.05 seconds (e3). This mismatch causes upstream dependency timeouts (e2) and subsequent pool exhaustion as connections are held waiting.",
+        "proposed_fix": "Increase the gateway's upstream_timeout_seconds configuration to exceed the dependency's work_delay_seconds.",
+        "evidence_ids": [
+          "e2",
+          "e3",
+          "e6"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 2,
+            "dependency_timeouts": 2,
+            "latency_mean_seconds": 0.04208162000286393,
+            "request_limit": 100
+          }
+        },
+        "e2": {
+          "service": "gateway",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-25T07:06:35.677664+00:00",
+              "service": "gateway",
+              "status": 200,
+              "event": "request_ok"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:35.714131+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:35.730815+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:35.747068+00:00",
+              "service": "gateway",
+              "status": 504,
+              "event": "upstream_dependency_timeout"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:35.747309+00:00",
+              "service": "gateway",
+              "status": 504,
+              "event": "upstream_dependency_timeout"
+            }
+          ]
+        },
+        "e3": {
+          "service": "gateway",
+          "tool": "read_config",
+          "value": {
+            "request_limit": 100,
+            "pool_capacity": 2,
+            "pool_acquire_timeout_seconds": 0.03,
+            "upstream_timeout_seconds": 0.05
+          }
+        },
+        "e4": {
+          "service": "dependency",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 1,
+            "errors": 0,
+            "pool_timeouts": 0,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.002341499988688156,
+            "request_limit": null
+          }
+        },
+        "e5": {
+          "service": "dependency",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-25T07:06:35.676682+00:00",
+              "service": "dependency",
+              "status": 200,
+              "event": "request_ok"
+            }
+          ]
+        },
+        "e6": {
+          "service": "dependency",
+          "tool": "read_config",
+          "value": {
+            "work_delay_seconds": 0.2
+          }
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_logs",
+            "service": "gateway"
+          },
+          "evidence_id": "e2"
+        },
+        {
+          "turn": 3,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_config",
+            "service": "gateway"
+          },
+          "evidence_id": "e3"
+        },
+        {
+          "turn": 4,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_metrics",
+            "service": "dependency"
+          },
+          "evidence_id": "e4"
+        },
+        {
+          "turn": 5,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_logs",
+            "service": "dependency"
+          },
+          "evidence_id": "e5"
+        },
+        {
+          "turn": 6,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_config",
+            "service": "dependency"
+          },
+          "evidence_id": "e6"
+        },
+        {
+          "turn": 7,
+          "actor": "model",
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "bad_config",
+            "affected_service": "gateway",
+            "explanation": "The dependency's work_delay_seconds is configured to 0.2 seconds (e6), but the gateway's upstream_timeout_seconds is configured to 0.05 seconds (e3). This mismatch causes upstream dependency timeouts (e2) and subsequent pool exhaustion as connections are held waiting.",
+            "proposed_fix": "Increase the gateway's upstream_timeout_seconds configuration to exceed the dependency's work_delay_seconds.",
+            "evidence_ids": [
+              "e2",
+              "e3",
+              "e6"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": false,
+      "time_to_diagnosis_seconds": 4.009178899999824,
+      "input_tokens": 867,
+      "output_tokens": 164,
+      "estimated_cost_usd": null,
+      "fix_executed": false
+    },
+    {
+      "run_id": "9aa4a9d3-77e1-4fdf-b41c-c200c66402fc",
+      "recorded_at": "2026-11-25T07:06:44.286521+00:00",
+      "fault": "slow_dependency",
+      "expected_service": "dependency",
+      "fault_verified": true,
+      "http_statuses": [
+        504,
+        503,
+        504,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.003938199995900504,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "bad_config",
+        "affected_service": "gateway",
+        "explanation": "The gateway is configured with an upstream_timeout_seconds of 0.05, but the dependency is configured with a work_delay_seconds of 0.2 (as seen in e3 and e6). Consequently, requests to the dependency naturally time out at the gateway (e1, e2), and the slow responses tie up the small connection pool of capacity 2, leading to connection pool acquire timeouts (e2, e3). The initiating cause is the mismatched configuration where the upstream timeout is significantly lower than the dependency's processing delay.",
+        "proposed_fix": "Increase the gateway's upstream_timeout_seconds to be greater than the dependency's work_delay_seconds (e.g., at least 0.25 seconds) and adjust the pool capacity if necessary.",
+        "evidence_ids": [
+          "e1",
+          "e2",
+          "e3",
+          "e6"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 2,
+            "dependency_timeouts": 2,
+            "latency_mean_seconds": 0.03907545999973081,
+            "request_limit": 100
+          }
+        },
+        "e2": {
+          "service": "gateway",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-25T07:06:40.223654+00:00",
+              "service": "gateway",
+              "status": 200,
+              "event": "request_ok"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:40.263268+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:40.279909+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:40.280223+00:00",
+              "service": "gateway",
+              "status": 504,
+              "event": "upstream_dependency_timeout"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:40.297779+00:00",
+              "service": "gateway",
+              "status": 504,
+              "event": "upstream_dependency_timeout"
+            }
+          ]
+        },
+        "e3": {
+          "service": "gateway",
+          "tool": "read_config",
+          "value": {
+            "request_limit": 100,
+            "pool_capacity": 2,
+            "pool_acquire_timeout_seconds": 0.03,
+            "upstream_timeout_seconds": 0.05
+          }
+        },
+        "e4": {
+          "service": "dependency",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 1,
+            "errors": 0,
+            "pool_timeouts": 0,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.0023347000096691772,
+            "request_limit": null
+          }
+        },
+        "e5": {
+          "service": "dependency",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-25T07:06:40.223069+00:00",
+              "service": "dependency",
+              "status": 200,
+              "event": "request_ok"
+            }
+          ]
+        },
+        "e6": {
+          "service": "dependency",
+          "tool": "read_config",
+          "value": {
+            "work_delay_seconds": 0.2
+          }
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_logs",
+            "service": "gateway"
+          },
+          "evidence_id": "e2"
+        },
+        {
+          "turn": 3,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_config",
+            "service": "gateway"
+          },
+          "evidence_id": "e3"
+        },
+        {
+          "turn": 4,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_metrics",
+            "service": "dependency"
+          },
+          "evidence_id": "e4"
+        },
+        {
+          "turn": 5,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_logs",
+            "service": "dependency"
+          },
+          "evidence_id": "e5"
+        },
+        {
+          "turn": 6,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_config",
+            "service": "dependency"
+          },
+          "evidence_id": "e6"
+        },
+        {
+          "turn": 7,
+          "actor": "model",
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "bad_config",
+            "affected_service": "gateway",
+            "explanation": "The gateway is configured with an upstream_timeout_seconds of 0.05, but the dependency is configured with a work_delay_seconds of 0.2 (as seen in e3 and e6). Consequently, requests to the dependency naturally time out at the gateway (e1, e2), and the slow responses tie up the small connection pool of capacity 2, leading to connection pool acquire timeouts (e2, e3). The initiating cause is the mismatched configuration where the upstream timeout is significantly lower than the dependency's processing delay.",
+            "proposed_fix": "Increase the gateway's upstream_timeout_seconds to be greater than the dependency's work_delay_seconds (e.g., at least 0.25 seconds) and adjust the pool capacity if necessary.",
+            "evidence_ids": [
+              "e1",
+              "e2",
+              "e3",
+              "e6"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": false,
+      "time_to_diagnosis_seconds": 4.04659920000995,
+      "input_tokens": 868,
+      "output_tokens": 242,
+      "estimated_cost_usd": null,
+      "fix_executed": false
+    },
+    {
+      "run_id": "d90a8ae8-3469-4e14-beb6-96516a5f628f",
+      "recorded_at": "2026-11-25T07:06:49.134714+00:00",
+      "fault": "slow_dependency",
+      "expected_service": "dependency",
+      "fault_verified": true,
+      "http_statuses": [
+        504,
+        504,
+        503,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.005907300001126714,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "bad_config",
+        "affected_service": "gateway",
+        "explanation": "The gateway is configured with an upstream_timeout_seconds of 0.05 (e3), but the dependency service is configured with a work_delay_seconds of 0.2 (e6). This mismatch causes all upstream requests to timeout (dependency_timeouts: 2 in e1, upstream_dependency_timeout in e2). Furthermore, the pool capacity is extremely low at 2 (e3), leading to connection pool acquire timeouts when concurrent requests back up waiting for the slow upstream dependency.",
+        "proposed_fix": "Increase the gateway's upstream_timeout_seconds to exceed the dependency's work_delay_seconds, or reduce the work_delay_seconds in the dependency service, and increase the gateway pool_capacity to handle concurrency.",
+        "evidence_ids": [
+          "e1",
+          "e2",
+          "e3",
+          "e6"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 2,
+            "dependency_timeouts": 2,
+            "latency_mean_seconds": 0.0385595400002785,
+            "request_limit": 100
+          }
+        },
+        "e2": {
+          "service": "gateway",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-25T07:06:44.820073+00:00",
+              "service": "gateway",
+              "status": 200,
+              "event": "request_ok"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:44.863969+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:44.864390+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:44.880080+00:00",
+              "service": "gateway",
+              "status": 504,
+              "event": "upstream_dependency_timeout"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:44.880392+00:00",
+              "service": "gateway",
+              "status": 504,
+              "event": "upstream_dependency_timeout"
+            }
+          ]
+        },
+        "e3": {
+          "service": "gateway",
+          "tool": "read_config",
+          "value": {
+            "request_limit": 100,
+            "pool_capacity": 2,
+            "pool_acquire_timeout_seconds": 0.03,
+            "upstream_timeout_seconds": 0.05
+          }
+        },
+        "e4": {
+          "service": "dependency",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 1,
+            "errors": 0,
+            "pool_timeouts": 0,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.0021708000131184235,
+            "request_limit": null
+          }
+        },
+        "e5": {
+          "service": "dependency",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-25T07:06:44.818936+00:00",
+              "service": "dependency",
+              "status": 200,
+              "event": "request_ok"
+            }
+          ]
+        },
+        "e6": {
+          "service": "dependency",
+          "tool": "read_config",
+          "value": {
+            "work_delay_seconds": 0.2
+          }
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_logs",
+            "service": "gateway"
+          },
+          "evidence_id": "e2"
+        },
+        {
+          "turn": 3,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_config",
+            "service": "gateway"
+          },
+          "evidence_id": "e3"
+        },
+        {
+          "turn": 4,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_metrics",
+            "service": "dependency"
+          },
+          "evidence_id": "e4"
+        },
+        {
+          "turn": 5,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_logs",
+            "service": "dependency"
+          },
+          "evidence_id": "e5"
+        },
+        {
+          "turn": 6,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_config",
+            "service": "dependency"
+          },
+          "evidence_id": "e6"
+        },
+        {
+          "turn": 7,
+          "actor": "model",
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "bad_config",
+            "affected_service": "gateway",
+            "explanation": "The gateway is configured with an upstream_timeout_seconds of 0.05 (e3), but the dependency service is configured with a work_delay_seconds of 0.2 (e6). This mismatch causes all upstream requests to timeout (dependency_timeouts: 2 in e1, upstream_dependency_timeout in e2). Furthermore, the pool capacity is extremely low at 2 (e3), leading to connection pool acquire timeouts when concurrent requests back up waiting for the slow upstream dependency.",
+            "proposed_fix": "Increase the gateway's upstream_timeout_seconds to exceed the dependency's work_delay_seconds, or reduce the work_delay_seconds in the dependency service, and increase the gateway pool_capacity to handle concurrency.",
+            "evidence_ids": [
+              "e1",
+              "e2",
+              "e3",
+              "e6"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": false,
+      "time_to_diagnosis_seconds": 4.299383799996576,
+      "input_tokens": 867,
+      "output_tokens": 233,
+      "estimated_cost_usd": null,
+      "fix_executed": false
+    },
+    {
+      "run_id": "a6791567-b0b5-45a7-896c-8483af479f93",
+      "recorded_at": "2026-11-25T07:06:57.469503+00:00",
+      "fault": "bad_config",
+      "expected_service": "gateway",
+      "fault_verified": true,
+      "http_statuses": [
+        503,
+        503,
+        503,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.014383000001544133,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "bad_config",
+        "affected_service": "gateway",
+        "explanation": "The gateway is rejecting incoming requests because its request_limit configuration is set to 0. Log events explicitly confirm requests are rejected with the message 'request_rejected: configured request_limit=0', which matches the configuration value found in e3 and metrics in e1.",
+        "proposed_fix": "Increase the gateway request_limit configuration from 0 to a valid positive number to allow incoming requests to be processed.",
+        "evidence_ids": [
+          "e2",
+          "e3",
+          "e4"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 0,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.0028779000014765186,
+            "request_limit": 0
+          }
+        },
+        "e2": {
+          "service": "gateway",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-25T07:06:49.666081+00:00",
+              "service": "gateway",
+              "status": 200,
+              "event": "request_ok"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:49.668905+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "request_rejected: configured request_limit=0"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:49.669551+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "request_rejected: configured request_limit=0"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:49.670095+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "request_rejected: configured request_limit=0"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:49.670693+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "request_rejected: configured request_limit=0"
+            }
+          ]
+        },
+        "e3": {
+          "service": "gateway",
+          "tool": "read_config",
+          "value": {
+            "request_limit": 0,
+            "pool_capacity": 2,
+            "pool_acquire_timeout_seconds": 0.03,
+            "upstream_timeout_seconds": 0.05
+          }
+        },
+        "e4": {
+          "service": "dependency",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 1,
+            "errors": 0,
+            "pool_timeouts": 0,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.00267580000218004,
+            "request_limit": null
+          }
+        },
+        "e5": {
+          "service": "dependency",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-25T07:06:49.664885+00:00",
+              "service": "dependency",
+              "status": 200,
+              "event": "request_ok"
+            }
+          ]
+        },
+        "e6": {
+          "service": "dependency",
+          "tool": "read_config",
+          "value": {
+            "work_delay_seconds": 0.002
+          }
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_logs",
+            "service": "gateway"
+          },
+          "evidence_id": "e2"
+        },
+        {
+          "turn": 3,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_config",
+            "service": "gateway"
+          },
+          "evidence_id": "e3"
+        },
+        {
+          "turn": 4,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_metrics",
+            "service": "dependency"
+          },
+          "evidence_id": "e4"
+        },
+        {
+          "turn": 5,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_logs",
+            "service": "dependency"
+          },
+          "evidence_id": "e5"
+        },
+        {
+          "turn": 6,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_config",
+            "service": "dependency"
+          },
+          "evidence_id": "e6"
+        },
+        {
+          "turn": 7,
+          "actor": "model",
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "bad_config",
+            "affected_service": "gateway",
+            "explanation": "The gateway is immediately rejecting incoming requests with 503 status codes due to a misconfiguration where request_limit is set to 0. Metrics show 4 errors out of 5 requests, and logs explicitly state 'request_rejected: configured request_limit=0'.",
+            "proposed_fix": "Update the gateway configuration to increase the request_limit from 0 to a functional positive integer value.",
+            "evidence_ids": [
+              "e1",
+              "e2",
+              "e3"
+            ]
+          },
+          "validation_error": "Insufficient or invalid evidence citations"
+        },
+        {
+          "turn": 8,
+          "actor": "model",
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "bad_config",
+            "affected_service": "gateway",
+            "explanation": "The gateway is rejecting incoming requests because its request_limit configuration is set to 0. Log events explicitly confirm requests are rejected with the message 'request_rejected: configured request_limit=0', which matches the configuration value found in e3 and metrics in e1.",
+            "proposed_fix": "Increase the gateway request_limit configuration from 0 to a valid positive number to allow incoming requests to be processed.",
+            "evidence_ids": [
+              "e2",
+              "e3",
+              "e4"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": true,
+      "time_to_diagnosis_seconds": 7.794420400008676,
+      "input_tokens": 1922,
+      "output_tokens": 284,
+      "estimated_cost_usd": null,
+      "fix_executed": false
+    },
+    {
+      "run_id": "aef5e0ae-732d-41ed-8c5e-37962491a5d6",
+      "recorded_at": "2026-11-25T07:07:02.248861+00:00",
+      "fault": "pool_exhaustion",
+      "expected_service": "gateway",
+      "fault_verified": true,
+      "http_statuses": [
+        503,
+        503,
+        503,
+        503
+      ],
+      "healthy_control_metrics": {
+        "requests": 1,
+        "errors": 0,
+        "pool_timeouts": 0,
+        "dependency_timeouts": 0,
+        "latency_mean_seconds": 0.005190900003071874,
+        "request_limit": 100
+      },
+      "recovery_verified": true,
+      "diagnosis": {
+        "action": "diagnose",
+        "root_cause": "bad_config",
+        "affected_service": "gateway",
+        "explanation": "The gateway configuration sets pool_capacity to 2, while the dependency service is functioning normally with very low latency (mean ~2.1ms in e4, request_ok in e5). The connection pool acquire timeouts (e2, e1) and 503 errors are caused by an overly restrictive pool capacity and acquire timeout (0.03s in e3) under concurrent traffic, rather than slow dependency performance.",
+        "proposed_fix": "Increase the gateway connection pool capacity and pool_acquire_timeout_seconds to properly handle the expected concurrency.",
+        "evidence_ids": [
+          "e2",
+          "e3",
+          "e4"
+        ]
+      },
+      "evidence": {
+        "e1": {
+          "service": "gateway",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 5,
+            "errors": 4,
+            "pool_timeouts": 4,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.03288215999782551,
+            "request_limit": 100
+          }
+        },
+        "e2": {
+          "service": "gateway",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-25T07:06:58.501119+00:00",
+              "service": "gateway",
+              "status": 200,
+              "event": "request_ok"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:58.543939+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:58.544099+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:58.544192+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            },
+            {
+              "timestamp": "2026-11-25T07:06:58.544464+00:00",
+              "service": "gateway",
+              "status": 503,
+              "event": "connection_pool_acquire_timeout"
+            }
+          ]
+        },
+        "e3": {
+          "service": "gateway",
+          "tool": "read_config",
+          "value": {
+            "request_limit": 100,
+            "pool_capacity": 2,
+            "pool_acquire_timeout_seconds": 0.03,
+            "upstream_timeout_seconds": 0.05
+          }
+        },
+        "e4": {
+          "service": "dependency",
+          "tool": "read_metrics",
+          "value": {
+            "requests": 1,
+            "errors": 0,
+            "pool_timeouts": 0,
+            "dependency_timeouts": 0,
+            "latency_mean_seconds": 0.0021302999957697466,
+            "request_limit": null
+          }
+        },
+        "e5": {
+          "service": "dependency",
+          "tool": "read_logs",
+          "value": [
+            {
+              "timestamp": "2026-11-25T07:06:58.500464+00:00",
+              "service": "dependency",
+              "status": 200,
+              "event": "request_ok"
+            }
+          ]
+        },
+        "e6": {
+          "service": "dependency",
+          "tool": "read_config",
+          "value": {
+            "work_delay_seconds": 0.002
+          }
+        }
+      },
+      "trace": [
+        {
+          "turn": 1,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_metrics",
+            "service": "gateway"
+          },
+          "evidence_id": "e1"
+        },
+        {
+          "turn": 2,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_logs",
+            "service": "gateway"
+          },
+          "evidence_id": "e2"
+        },
+        {
+          "turn": 3,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_config",
+            "service": "gateway"
+          },
+          "evidence_id": "e3"
+        },
+        {
+          "turn": 4,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_metrics",
+            "service": "dependency"
+          },
+          "evidence_id": "e4"
+        },
+        {
+          "turn": 5,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_logs",
+            "service": "dependency"
+          },
+          "evidence_id": "e5"
+        },
+        {
+          "turn": 6,
+          "actor": "coverage_policy",
+          "decision": {
+            "action": "read_config",
+            "service": "dependency"
+          },
+          "evidence_id": "e6"
+        },
+        {
+          "turn": 7,
+          "actor": "model",
+          "decision": {
+            "action": "diagnose",
+            "root_cause": "bad_config",
+            "affected_service": "gateway",
+            "explanation": "The gateway configuration sets pool_capacity to 2, while the dependency service is functioning normally with very low latency (mean ~2.1ms in e4, request_ok in e5). The connection pool acquire timeouts (e2, e1) and 503 errors are caused by an overly restrictive pool capacity and acquire timeout (0.03s in e3) under concurrent traffic, rather than slow dependency performance.",
+            "proposed_fix": "Increase the gateway connection pool capacity and pool_acquire_timeout_seconds to properly handle the expected concurrency.",
+            "evidence_ids": [
+              "e2",
+              "e3",
+              "e4"
+            ]
+          }
+        }
+      ],
+      "error": null,
+      "correct": false,
+      "time_to_diagnosis_seconds": 3.7305855000013253,
+      "input_tokens": 874,
+      "output_tokens": 187,
+      "estimated_cost_usd": null,
+      "fix_executed": false
+    }
+  ],
+  "records_sha256": "35489f2e58ba4799b11f19223a1b2b1da89dcae5241ec55aaf30562be34539e8",
+  "policy_description": "Host-enforced metrics, logs and configuration from both services; optional model-requested reads; no fault label or correctness feedback.",
+  "compute": "Existing billing-disabled Google project; free API, no paid fallback.",
+  "actual_api_charge_usd": 0
+}

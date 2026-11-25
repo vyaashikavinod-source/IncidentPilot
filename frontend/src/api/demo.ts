@@ -2,11 +2,11 @@
 import type { IncidentDetail } from './incidents';
 import type { Proposal } from './proposals';
 
-import recorded from '../recorded-runs.json';
+import recorded from '../recorded-runs-v2.json';
 const scenarios = recorded.runs.map(run => [run.expected_service, run.fault.replaceAll('_', ' '), 'high', run.diagnosis?.explanation ?? 'No diagnosis', run.diagnosis?.proposed_fix ?? 'No proposal']);
 const incidents: IncidentDetail[] = recorded.runs.map(run => ({
   incident_id: run.run_id, title: run.fault.replaceAll('_', ' '), severity: 'high', source: 'recorded-real-fault',
-  status: 'diagnosed', affected_service: run.expected_service, affected_service_hint: run.expected_service,
+  status: run.diagnosis ? 'diagnosed' : 'investigation_failed', affected_service: run.expected_service, affected_service_hint: run.expected_service,
   description: `Recorded injected fault: ${run.fault}. Model diagnosis: ${run.diagnosis?.root_cause}. ${run.correct ? 'Correct' : 'Incorrect'} diagnosis. No remediation executed.`,
   created_at:run.recorded_at, updated_at:run.recorded_at, evidence:run.evidence,
 }));
@@ -15,8 +15,8 @@ function proposal(index: number): Proposal {
   return { proposal_id: 'proposal-' + id, version: 1, proposal_hash: 'demo-only-' + id,
     status: sessionStorage.getItem('demo-decision-' + id) ?? 'proposed', proposed_action_type: 'review',
     target_service: scenarios[index][0], description: scenarios[index][4], rationale: scenarios[index][3],
-    expected_effect: 'Demonstrate a review workflow only.', risk: 'Simulated. No infrastructure action occurs.',
-    rollback_plan: 'No real changes are made.', verification_plan: 'Review the simulated evidence.' };
+    expected_effect: 'Demonstrate a review workflow only.', risk: 'Untrusted recorded model proposal. No infrastructure action occurs.',
+    rollback_plan: 'No real changes are made.', verification_plan: 'Review the recorded evidence; model proposals were never executed.' };
 }
 export async function demoRequest<T>(method: 'GET' | 'POST', path: string, query: Record<string, string | number | undefined> = {}, body?: unknown): Promise<T> {
   let result: unknown;
@@ -34,9 +34,9 @@ export async function demoRequest<T>(method: 'GET' | 'POST', path: string, query
     if (method === 'GET' && parts.length === 4) result = incident;
     else if (method === 'GET' && parts[4] === 'investigation') {
       const run = recorded.runs[index];
-      result = {status:'completed', turns:run.trace.length, tool_call_count:Object.keys(run.evidence).length,error:run.error,last_failure_at:null,
-        steps:run.trace.map((step,i)=>({step_number:i+1,timestamp:run.recorded_at,current_hypothesis:'Recorded model decision',observation:JSON.stringify(step.decision),disposition:'continue',evidence_ids:'evidence_id' in step ? [step.evidence_id]:[]})),
-        diagnosis:{diagnosis_id:run.run_id,likely_root_cause:run.diagnosis?.root_cause,affected_service:run.expected_service,failure_class:run.fault,confidence:null,concise_explanation:run.diagnosis?.explanation,investigation_summary:'One gateway metrics read followed by diagnosis; no logs, config or dependency reads.',supporting_evidence_ids:evidenceIds,contradicting_evidence_ids:[],remaining_uncertainties:['Model predicted pool exhaustion in all nine runs; no evidence of diagnostic discrimination.']}};
+      result = {status:run.error?'failed':'completed', turns:run.trace.length, tool_call_count:Object.keys(run.evidence).length,error:run.error,last_failure_at:null,
+        steps:run.trace.map((step,i)=>({step_number:i+1,timestamp:run.recorded_at,current_hypothesis:('actor' in step && step.actor === 'coverage_policy') ? 'Host evidence coverage policy' : 'Recorded model decision',observation:JSON.stringify(step.decision),disposition:'continue',evidence_ids:'evidence_id' in step ? [step.evidence_id]:[]})),
+        diagnosis:{diagnosis_id:run.run_id,likely_root_cause:run.diagnosis?.root_cause,affected_service:run.diagnosis?.affected_service,failure_class:run.fault,confidence:null,concise_explanation:run.diagnosis?.explanation,investigation_summary:'Host gathers metrics, logs and configuration from both services before bounded model decisions. Initial reads are host-enforced; additional reads are model-requested.',supporting_evidence_ids:evidenceIds,contradicting_evidence_ids:[],remaining_uncertainties:['Small toy benchmark; wrong diagnoses and rejected outputs are preserved. Model explanations and proposed fixes require human review.']}};
     }
     else if (method === 'GET' && parts[4] === 'proposals') result = [proposal(index)];
     else if (method === 'POST' && parts[4] === 'proposals' && parts[5] === proposal(index).proposal_id && ['approve', 'reject'].includes(parts[6])) {

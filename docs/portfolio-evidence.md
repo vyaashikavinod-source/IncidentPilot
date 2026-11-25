@@ -70,3 +70,45 @@ Bad-config evidence has `request_limit: 0`. The model also invents 50 requests
 where the recorded counter is 5. Rules outperform it (6/9). No improved agent
 run is claimed. The browser's incident list now maps the nine recorded run IDs
 to the actual evidence/diagnoses, replacing unrelated synthetic sample rows.
+
+## Broader-evidence and taxonomy follow-ups
+
+Original nine-case records remain unchanged: Qwen2.5-1.5B 3/9, rules 6/9.
+The original model predicted pool exhaustion every time after a single gateway
+metrics read, including the unsupported 50-request claim.
+
+The new host policy reads metrics, logs and configuration from both gateway
+and dependency before model decisions. These six initial reads are selected
+by the host, not the agent. The model can request additional allowlisted reads,
+must cite both services and at least two tool types, and cannot execute fixes.
+Invalid citations and unsupported explicit request counts are rejected. This
+does not certify the explanation's semantics.
+
+All runs use the same balanced nine-case toy protocol and retain failures:
+
+| Model / policy | Correct | Notes |
+| --- | ---: | --- |
+| Original 1.5B metrics-only | 3/9 | Always pool exhaustion |
+| 1.5B broader evidence v2 | 0/9 | More evidence did not improve interpretation |
+| 3B broader evidence v2 | 4/9 | Includes timeout and rejected diagnosis |
+| Gemini Flash-Lite v2 | 3/9 | Calls capacity/latency configuration bad_config |
+| Gemini Flash-Lite taxonomy v3 | 8/9 | Eight accepted diagnoses correct; one API error counted incorrect |
+| Original rules baseline | 6/9 | Deterministic baseline |
+
+Taxonomy v3 explicitly distinguishes gateway admission rejection, unavailable
+connection slots with responsive dependency, and upstream latency exceeding
+the gateway deadline. Definitions were clarified after reviewing v2 errors.
+This is exploratory on reused toy fault templates, not independent validation,
+proof of general diagnostic ability, or a fair model-only ablation. A broader
+unseen-fault evaluation remains necessary. No expected case identity, ground
+truth service, or correctness feedback is given to the model.
+
+V3 median time: 3.711342 seconds. Known successful-call usage: 8,811 input and
+1,508 output tokens. The failed call omitted usage, so complete totals remain
+unavailable. Existing Google project billing stayed disabled; actual API
+charge $0, with no paid fallback. Local CPU costs exclude hardware/electricity.
+
+The console defaults to the latest recorded v3 incidents, with all older sets
+selectable for trace comparison and JSON download. The failed API case is
+marked investigation_failed. Original records are not overwritten. Future
+harness runs also fsync a JSONL record after each completed injected fault.

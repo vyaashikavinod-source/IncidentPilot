@@ -9,3 +9,8 @@ if (!evaluation.runs.length || evaluation.runs.some(run => run.metrics.sample_si
   throw new Error('Expected completed frozen evaluation reports');
 }
 console.log('Using checked-in replay evidence; no source overlay or inference required.');
+
+for (const name of ['recorded-runs-v2.json','recorded-runs-v2-small.json','recorded-runs-v2-large.json','recorded-runs-v2-gemini.json']) {
+  const report=JSON.parse(fs.readFileSync(require('node:path').join(__dirname,'public',name),'utf8'));
+  if(report.agent_type!=='real_model'||report.runs.length!==9) throw new Error('Invalid recorded comparison: '+name);
+}
